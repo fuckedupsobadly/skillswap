@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.env*.local
+.env
+.pglite*
+/test-results
+/playwright-report
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.DS_Store
+.playwright-mcp

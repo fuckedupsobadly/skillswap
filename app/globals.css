@@ -1,0 +1,226 @@
+@import "tailwindcss";
+
+/*
+ * SkillSwap Village — visual system (UI design doc §10).
+ * Every token has exactly one role and is never used outside it.
+ * The product is never in dark mode: night is a tint on the world canvas only; panels and HUD stay paper.
+ */
+:root {
+  --ink: #2b1b33; /* outlines, all UI text, focus ring */
+  --paper: #fbf6ec; /* panel background */
+  --paper-shade: #eadfcb; /* panel inner divisions, pressed states */
+  --lantern: #f2b33d; /* primary action button AND lit lanterns only */
+  --lantern-edge: #c98f22; /* the primary button's 2 px bottom edge */
+  --lantern-glow: #ffe3a1; /* world-only light halo around lit windows at dusk */
+  --grass: #a8cf8e;
+  --grass-shade: #76a86a;
+  --path: #ddbd8f;
+  --path-shade: #b9935f;
+  --water: #86bedf;
+  --stone: #b7b2c2;
+  --danger: #b03f3a; /* destructive confirms and errors only */
+  --ok: #357344; /* success text only, never decoration */
+  --ink-soft: rgb(43 27 51 / 0.72); /* secondary text: ink at reduced opacity, not a new colour */
+  --ink-faint: rgb(43 27 51 / 0.2); /* hard drop shadow */
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-paper-shade: var(--paper-shade);
+  --color-lantern: var(--lantern);
+  --color-lantern-edge: var(--lantern-edge);
+  --color-lantern-glow: var(--lantern-glow);
+  --color-grass: var(--grass);
+  --color-grass-shade: var(--grass-shade);
+  --color-path: var(--path);
+  --color-path-shade: var(--path-shade);
+  --color-water: var(--water);
+  --color-stone: var(--stone);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-pixel: var(--font-pixelify), ui-monospace, monospace;
+  /* §10.2 type: 13 meta · 16 body/buttons · 20 names and place titles */
+  --text-meta: 13px;
+  --text-meta--line-height: 18px;
+  --text-meta--letter-spacing: 0.02em;
+  --text-meta--font-weight: 500;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-label: 16px;
+  --text-label--line-height: 20px;
+  --text-name: 20px;
+  --text-name--line-height: 24px;
+  /* 4 px base unit */
+  --spacing: 4px;
+}
+
+html {
+  background: var(--paper);
+}
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem; /* respects the browser's font size (§9) */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+::selection {
+  background: var(--paper-shade);
+  color: var(--ink);
+}
+/* §9 Focus: 2 px plum ring with 2 px offset on every control. */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Pixel face: names, nameplates, place titles (600) and buttons, prompts, labels (500). Never paragraphs. */
+@utility font-pixel {
+  font-family: var(--font-pixel);
+  font-weight: 500;
+  -webkit-font-smoothing: none;
+}
+@utility font-name {
+  font-family: var(--font-pixel);
+  font-weight: 600;
+  font-size: var(--text-name);
+  line-height: var(--text-name--line-height);
+}
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * §10.3 Panel: paper fill, 2 px ink pixel border drawn with a 9-slice PNG (stepped corners, not rounded),
+ * 4 px hard drop shadow in ink at 20 %, no blur. drop-shadow follows the stepped silhouette exactly.
+ */
+@utility panel {
+  border-style: solid;
+  border-width: 4px;
+  border-image: url("/ui/frame-paper.png") 4 fill / 4px / 0 stretch;
+  image-rendering: pixelated;
+  filter: drop-shadow(4px 4px 0 var(--ink-faint));
+}
+/* Cards exist only for clickable rows: same frame, no shadow until pointed at. */
+@utility card {
+  border-style: solid;
+  border-width: 4px;
+  border-image: url("/ui/frame-paper.png") 4 fill / 4px / 0 stretch;
+  image-rendering: pixelated;
+}
+@utility divider {
+  border-top: 2px solid var(--paper-shade);
+}
+
+/* §10.3 Buttons. Height 44 px (§9 touch targets). */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  padding-inline: 16px;
+  font-family: var(--font-pixel);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--ink);
+  border-style: solid;
+  border-width: 4px;
+  image-rendering: pixelated;
+  white-space: nowrap;
+  user-select: none;
+  &:disabled,
+  &[aria-disabled="true"] {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+/* Primary: lantern fill, ink text, stepped corners, 2 px bottom edge that disappears on press (sinks 2 px). */
+@utility btn-primary {
+  border-image: url("/ui/frame-lantern.png") 4 fill / 4px / 0 stretch;
+  box-shadow: inset 0 -2px 0 var(--lantern-edge);
+  &:active {
+    box-shadow: none;
+    transform: translateY(2px);
+  }
+}
+/* Secondary: paper fill, ink border. Pressed: paper-shade. */
+@utility btn-secondary {
+  border-image: url("/ui/frame-paper.png") 4 fill / 4px / 0 stretch;
+  &:active {
+    border-image: url("/ui/frame-paper-shade.png") 4 fill / 4px / 0 stretch;
+  }
+}
+/* A chosen option in a row of choices (length, day, time, status): the pressed paper-shade frame. */
+@utility btn-pressed {
+  border-image: url("/ui/frame-paper-shade.png") 4 fill / 4px / 0 stretch;
+}
+/* Tertiary: text only, underline on hover. */
+@utility btn-tertiary {
+  border-color: transparent;
+  padding-inline: 8px;
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+/* Inputs: paper fill, 2 px ink border. */
+@utility field {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-style: solid;
+  border-width: 4px;
+  border-image: url("/ui/frame-paper.png") 4 fill / 4px / 0 stretch;
+  image-rendering: pixelated;
+  color: var(--ink);
+  font-size: 16px;
+  &::placeholder {
+    color: var(--ink-soft);
+  }
+}
+
+/* §10.5 Panels: 120 ms in, 90 ms out, steps(4) for the pixel slide feel. */
+@keyframes sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@utility anim-sheet {
+  animation: sheet-in 120ms steps(4) both;
+}
+@utility anim-sheet-up {
+  animation: sheet-up 120ms steps(4) both;
+}
+@utility anim-fade {
+  animation: fade-in 120ms steps(4) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component's own timing */
+    animation-duration: 1ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: same */
+    transition-duration: 1ms !important;
+  }
+}
