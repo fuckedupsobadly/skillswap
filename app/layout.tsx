@@ -21,6 +21,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#fbf6ec" };
 
+// Every page depends on who is visiting (this layout reads the session cookie), so nothing here can be
+// prerendered. Saying so up front stops `next build` from trying anyway: during that attempt a page would
+// start its own queries in parallel and the build would open the production database.
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
   return (
