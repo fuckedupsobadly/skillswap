@@ -34,7 +34,7 @@ export async function open(opts: { dataDir?: string; seed?: boolean } = {}): Pro
     const { drizzle } = await import("drizzle-orm/node-postgres");
     // Small by default: serverless instances are many, and Neon's pooler multiplexes them. Tunable per deploy.
     const max = Math.max(1, Number(process.env.DATABASE_POOL_MAX) || 5);
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL, max });
+    const pool = new Pool({ connectionString: pgConnectionString(process.env.DATABASE_URL), max });
     const db = drizzle(pool, { schema }) as unknown as DB;
     await ensureGame(db);
     return { db, driver: "pg", close: () => pool.end() };
@@ -77,6 +77,16 @@ export async function ensureGame(db: DB) {
   await game.ensureSampleKitties(db);
   const village = await import("@/modules/village/service");
   await village.ensureSampleVillagers(db);
+}
+
+/**
+ * Neon's URLs say `sslmode=require`. node-postgres currently treats that as `verify-full` (checks the
+ * certificate and host name), warns on every connection that v9 will downgrade it to libpq's weaker meaning,
+ * and Vercel files that warning as an error. Ask for `verify-full` by name: same behaviour today, and it stays
+ * that way after the upgrade.
+ */
+export function pgConnectionString(url: string): string {
+  return url.replace(/([?&]sslmode=)(?:prefer|require|verify-ca)(?=&|$)/, "$1verify-full");
 }
 
 /** Raw `execute` results differ slightly by driver; both expose `.rows`. */

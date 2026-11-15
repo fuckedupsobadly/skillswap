@@ -1,4 +1,4 @@
-import { MIGRATIONS_DIR } from "./client";
+import { MIGRATIONS_DIR, pgConnectionString } from "./client";
 
 /**
  * Runs on every Vercel build, before `next build`: bring the production database (Neon, via DATABASE_URL) up to
@@ -19,7 +19,7 @@ async function main() {
   const { Pool } = await import("pg");
   const { drizzle } = await import("drizzle-orm/node-postgres");
   const { migrate } = await import("drizzle-orm/node-postgres/migrator");
-  const pool = new Pool({ connectionString: url, max: 1 });
+  const pool = new Pool({ connectionString: pgConnectionString(url), max: 1 });
   try {
     const t0 = Date.now();
     await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
