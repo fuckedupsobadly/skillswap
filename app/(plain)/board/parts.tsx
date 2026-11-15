@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { saveSkills } from "@/app/actions/profile";
 import { sendNote, setOnboardingStep } from "@/app/actions/village";
 import { categoryColor } from "@/modules/village/guilds";
+import { FIRST_STEP_COUNT, stepInfo } from "@/modules/village/onboarding";
 import { ShowOnMap } from "@/ui/show-on-map";
 import { useToWorld } from "@/ui/to-world";
 
@@ -117,7 +118,7 @@ export function TeachPicker({ skills }: { skills: { id: string; name: string; ca
       <div className="flex gap-2">
         <button
           type="button"
-          className="btn btn-primary"
+          className={picked.length ? "btn btn-primary" : "btn btn-secondary"}
           disabled={pending || !picked.length}
           onClick={() => finish(true)}
         >
@@ -131,17 +132,23 @@ export function TeachPicker({ skills }: { skills: { id: string; name: string; ca
   );
 }
 
-/** Progress dot row at the top of each onboarding sheet (§11). */
-export function Dots({ step, total = 7 }: { step: number; total?: number }) {
+/** Progress row at the top of each onboarding sheet (§11): the dots, and in words where you are. */
+export function Dots({ step, total = FIRST_STEP_COUNT }: { step: number; total?: number }) {
+  const info = stepInfo(step);
   return (
-    <ol aria-label={`Step ${step} of ${total}`} className="flex gap-1.5">
-      {Array.from({ length: total }, (_, i) => (
-        <li
-          key={i}
-          aria-hidden
-          className={`h-2 w-2 ${i < step ? "bg-ink" : "bg-paper-shade outline outline-1 outline-ink"}`}
-        />
-      ))}
-    </ol>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <ol aria-hidden className="flex gap-1">
+        {Array.from({ length: total }, (_, i) => (
+          <li
+            key={i}
+            className={`h-2 w-3 ${i < step ? "bg-ink" : "bg-paper-shade"} ${i === step - 1 ? "w-6" : ""}`}
+          />
+        ))}
+      </ol>
+      <p className="text-meta text-ink-soft">
+        Step {step} of {total}
+        {info ? ` · ${info.title}` : ""}
+      </p>
+    </div>
   );
 }

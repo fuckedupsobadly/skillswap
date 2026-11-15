@@ -100,9 +100,7 @@ export default async function KittyPage() {
               {p.recent.map((e) => (
                 <div key={e.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                   <span className="text-body">{SOURCE_LABEL[e.source as XpSource] ?? e.source}</span>
-                  <span
-                    className={`font-pixel text-body tabular-nums ${e.amount > 0 ? "text-ink" : "text-ink-soft"}`}
-                  >
+                  <span className={`tnum font-semibold ${e.amount > 0 ? "text-ink" : "text-ink-soft"}`}>
                     {e.amount > 0 ? `+${e.amount}` : e.amount}
                   </span>
                 </div>

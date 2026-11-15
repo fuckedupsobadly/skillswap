@@ -40,8 +40,11 @@ export function GuestBootstrap({ hasSession }: { hasSession: boolean }) {
 
   if (hasSession || state === "idle") return null;
   return (
-    <div role="status" className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-3">
-      <p className=" border-2 border-paper-shade bg-paper px-3 py-2 text-meta text-ink-soft shadow-sm">
+    <div
+      role="status"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[90] flex justify-center px-4 pt-3"
+    >
+      <p className="panel px-3 py-2 text-meta text-ink-soft">
         {state === "working" ? "Creating your guest identity on this device…" : `Couldn't sign in: ${error}`}
       </p>
     </div>

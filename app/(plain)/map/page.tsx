@@ -13,6 +13,7 @@ export default function MapPage() {
   return (
     <Page
       title="The village"
+      scene={{ place: "map" }}
       sub="Every place, one click away. Walking is only for fun."
       action={
         <a href="/?village=1" className="btn btn-secondary">
@@ -20,37 +21,43 @@ export default function MapPage() {
         </a>
       }
     >
-      {DISTRICTS.map((d) => (
-        <Section key={d} title={d}>
-          <ul className="grid">
-            {PLACES.filter((p) => p.district === d).map((p) => {
-              const g = p.id.startsWith("guild-") ? GUILDS.find((x) => `guild-${x.id}` === p.id) : null;
-              return (
-                <li key={p.id} className="border-t-2 border-paper-shade first:border-t-0">
-                  <Link href={p.route} className="group flex min-h-11 items-center gap-3 py-2">
-                    {g ? (
-                      <span
-                        aria-hidden
-                        className="grid h-7 w-7 shrink-0 place-items-center"
-                        style={{ background: g.roof }}
-                      >
-                        <PixelIcon name={g.icon} size={16} />
+      <div className="grid items-start gap-8 @3xl:grid-cols-3">
+        {DISTRICTS.map((d) => (
+          <Section
+            key={d}
+            title={d}
+            icon={d === "Town Square" ? "hourglass" : d === "Guild Quarter" ? "gear" : "map"}
+          >
+            <ul className="grid">
+              {PLACES.filter((p) => p.district === d).map((p) => {
+                const g = p.id.startsWith("guild-") ? GUILDS.find((x) => `guild-${x.id}` === p.id) : null;
+                return (
+                  <li key={p.id} className="border-t-2 border-paper-shade first:border-t-0">
+                    <Link href={p.route} className="group flex min-h-11 items-center gap-3 py-2">
+                      {g ? (
+                        <span
+                          aria-hidden
+                          className="grid h-7 w-7 shrink-0 place-items-center"
+                          style={{ background: g.roof }}
+                        >
+                          <PixelIcon name={g.icon} size={16} />
+                        </span>
+                      ) : null}
+                      <span className="grid min-w-0 flex-1">
+                        <span className="font-pixel text-label group-hover:underline group-hover:underline-offset-4">
+                          {p.name}
+                        </span>
+                        <span className="text-meta text-ink-soft">{p.blurb}</span>
                       </span>
-                    ) : null}
-                    <span className="grid min-w-0 flex-1">
-                      <span className="font-pixel text-label group-hover:underline group-hover:underline-offset-4">
-                        {p.name}
-                      </span>
-                      <span className="text-meta text-ink-soft">{p.blurb}</span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </Section>
-      ))}
-      <Section title="Residential Lanes">
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </Section>
+        ))}
+      </div>
+      <Section title="Residential Lanes" icon="sign">
         <p className="text-ink-soft">
           Every hut belongs to a real member. Find someone on the{" "}
           <Link href="/board" className="text-ink underline underline-offset-4">

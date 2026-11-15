@@ -26,7 +26,7 @@ export function Field({
 }) {
   return (
     <div className="grid content-start gap-1.5">
-      <label htmlFor={htmlFor} className="font-pixel text-label">
+      <label htmlFor={htmlFor} className="field-label">
         {label}
       </label>
       {children}

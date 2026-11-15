@@ -101,7 +101,7 @@ export function BookingForm(props: {
     >
       <div className="grid gap-4">
         <div className="grid grid-cols-[72px_1fr] items-center gap-3">
-          <span aria-hidden className="font-pixel text-label">
+          <span aria-hidden className="field-label">
             Length
           </span>
           <ChoiceRow
@@ -127,7 +127,7 @@ export function BookingForm(props: {
         ) : (
           <>
             <div className="grid grid-cols-[72px_1fr] items-center gap-3">
-              <span aria-hidden className="font-pixel text-label">
+              <span aria-hidden className="field-label">
                 Day
               </span>
               <ChoiceRow
@@ -142,7 +142,7 @@ export function BookingForm(props: {
               />
             </div>
             <div className="grid grid-cols-[72px_1fr] items-start gap-3">
-              <span aria-hidden className="flex min-h-11 items-center font-pixel text-label">
+              <span aria-hidden className="field-label flex min-h-11 items-center">
                 Time
               </span>
               <div className="grid gap-1">

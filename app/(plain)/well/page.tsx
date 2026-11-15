@@ -20,7 +20,12 @@ export default async function Well({
   const sp = await searchParams;
   const when = describeAvailability(await availabilityOf(await getDb(), viewer.memberId));
   return (
-    <Page title="Make a wish">
+    <Page
+      title="Make a wish"
+      sub="Tell the Well what you want to learn. A match lands in your mailbox."
+      scene={{ place: "well" }}
+      size="narrow"
+    >
       <WishForm when={when} ai={aiEnabled()} first={sp.first === "1"} initial={sp.q ?? ""} />
     </Page>
   );

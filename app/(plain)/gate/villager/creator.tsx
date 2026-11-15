@@ -106,7 +106,7 @@ export function Creator({
         </div>
         <div className="grid content-start gap-3">
           <div className="grid grid-cols-[64px_1fr] items-center gap-2">
-            <span aria-hidden className="font-pixel text-label">
+            <span aria-hidden className="field-label">
               Skin
             </span>
             <ChoiceRow
@@ -119,7 +119,7 @@ export function Creator({
           </div>
           {rows.map((r) => (
             <div key={r.label} className="grid grid-cols-[64px_1fr] items-start gap-2">
-              <span className="flex min-h-11 items-center font-pixel text-label">{r.label}</span>
+              <span className="field-label flex min-h-11 items-center">{r.label}</span>
               <div className="grid">
                 <div className="flex items-center gap-2">
                   <button
@@ -160,7 +160,7 @@ export function Creator({
             </div>
           ))}
           <div className="grid grid-cols-[64px_1fr] items-center gap-2">
-            <span className="font-pixel text-label">Extra</span>
+            <span className="field-label">Extra</span>
             <div className="flex flex-wrap gap-1">
               {ACCESSORIES.map((a) => (
                 <button
@@ -196,7 +196,7 @@ export function Creator({
       </div>
       <div className="divider flex flex-wrap items-end gap-3 pt-5">
         <div className="grid min-w-48 flex-1 gap-1.5">
-          <label htmlFor="village-name" className="font-pixel text-label">
+          <label htmlFor="village-name" className="field-label">
             Name in the village
           </label>
           <input

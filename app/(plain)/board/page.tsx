@@ -52,6 +52,8 @@ export default async function Board({
   return (
     <Page
       title="Notice Board"
+      sub="Who teaches what, and who wishes for what. Lit lanterns can start now."
+      scene={{ place: "board" }}
       action={
         <nav aria-label="Board" className="flex">
           <Link

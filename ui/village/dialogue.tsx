@@ -3,7 +3,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { sendNote, setOnboardingStep, setPresence } from "@/app/actions/village";
 import { formatHours, formatMinutes, levelName } from "@/modules/platform/format";
+import { BARKEEP_LOOK } from "@/modules/village/art/people";
 import type { MemberCard } from "@/modules/village/service";
+import { PixelIcon } from "../pixel/icons";
 import { Portrait } from "../portrait";
 import { type Dialog, village } from "./store";
 
@@ -66,14 +68,32 @@ function Frame({
     ref.current?.querySelector<HTMLElement>("button, a, textarea")?.focus();
   }, []);
   return (
-    <div ref={ref} role="dialog" aria-label={label} className="w-full max-w-[640px] anim-sheet">
-      {/* Portrait and nameplate sit above the box (§6.3), leaving the box for words and actions. */}
-      <div className="flex items-end gap-3 pl-6">
-        {portrait ? <div className="panel p-1">{portrait}</div> : null}
-        <div className="pb-2">{nameplate}</div>
+    <div ref={ref} role="dialog" aria-label={label} className="w-full max-w-[680px] anim-sheet">
+      {/* Portrait and nameplate sit above the box (§6.3), leaving the box for words and actions: the
+          portrait in a wooden frame, the name on a plank hung over the box's edge. */}
+      <div className="relative z-10 flex items-end gap-3 pl-6">
+        {portrait ? (
+          <div className="sign p-1.5">
+            <div className="window">{portrait}</div>
+          </div>
+        ) : null}
+        <div className="sign mb-[-14px] px-3.5 pt-1.5 pb-2">{nameplate}</div>
       </div>
-      <div className="panel -mt-0.5 grid gap-4 p-6">{children}</div>
-      <p className="mt-1 text-right font-pixel text-label text-ink-soft">Esc · close</p>
+      <div className="panel parchment relative -mt-1 grid gap-4 px-7 pt-8 pb-4">
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Close (Esc)"
+          title="Close · Esc"
+          className="btn btn-tertiary absolute top-1.5 right-1.5 size-11 p-0"
+        >
+          <PixelIcon name="close" size={16} />
+        </button>
+        {children}
+        <p className="justify-self-end text-meta text-ink-soft">
+          <kbd className="keycap mr-1">Esc</kbd> close
+        </p>
+      </div>
     </div>
   );
 }
@@ -153,7 +173,7 @@ function MemberDialog({ handle, sign }: { handle: string; sign: boolean }) {
           setNote(null);
         }}
       >
-        <label htmlFor="note" className="font-pixel text-label">
+        <label htmlFor="note" className="field-label">
           Note for {first}
         </label>
         <textarea
@@ -179,11 +199,11 @@ function MemberDialog({ handle, sign }: { handle: string; sign: boolean }) {
     return (
       <Frame
         label={`${first}'s hut`}
-        portrait={<Portrait look={m.look} label={m.name} />}
+        portrait={<Portrait look={m.look} label={m.name} size={64} />}
         nameplate={nameplate}
       >
         <dl className="grid grid-cols-[96px_1fr] gap-x-3 gap-y-1">
-          <dt className="font-pixel text-label">Teaches</dt>
+          <dt className="field-label">Teaches</dt>
           <dd>
             {m.teaches.length
               ? m.teaches.map((t) => `${t.name} (${levelName(t.level).toLowerCase()})`).join(" · ")
@@ -191,11 +211,11 @@ function MemberDialog({ handle, sign }: { handle: string; sign: boolean }) {
           </dd>
           {m.learning.length ? (
             <>
-              <dt className="font-pixel text-label">Learning</dt>
+              <dt className="field-label">Learning</dt>
               <dd>{m.learning.join(", ")}</dd>
             </>
           ) : null}
-          <dt className="font-pixel text-label">Next free</dt>
+          <dt className="field-label">Next free</dt>
           <dd className="tnum">
             {m.nextFree.length
               ? m.nextFree.map((s) => timeIn(s, tz)).join(" · ")
@@ -237,7 +257,7 @@ function MemberDialog({ handle, sign }: { handle: string; sign: boolean }) {
     );
   }
   return (
-    <Frame label={first} portrait={<Portrait look={m.look} label={m.name} />} nameplate={nameplate}>
+    <Frame label={first} portrait={<Portrait look={m.look} label={m.name} size={64} />} nameplate={nameplate}>
       {/* The quote is the member's own status line; if empty, no quote — just their skills above. */}
       {m.statusLine ? <p className="text-body">“{m.statusLine}”</p> : null}
       {noteBox}
@@ -289,7 +309,11 @@ function Barkeep() {
     router.push(href);
   };
   return (
-    <Frame label="The Barkeep" nameplate={<span className="font-name text-name">Barkeep · AI</span>}>
+    <Frame
+      label="The Barkeep"
+      portrait={<Portrait look={BARKEEP_LOOK} label="The Barkeep" size={64} />}
+      nameplate={<span className="font-name text-name">Barkeep · AI</span>}
+    >
       <p className="min-h-12 text-body" aria-live="polite">
         {BARKEEP_LINE.slice(0, n)}
       </p>

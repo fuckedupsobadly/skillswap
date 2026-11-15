@@ -529,7 +529,7 @@ export function fieldKitty(code: string, view: KView, anim: keyof typeof K_ANIMS
 
 // ── Scenery critters: non-human, no nameplates, never clickable as people ──────────────────────
 
-export function critter(kind: "chicken" | "duck" | "bird", f: number) {
+export function critter(kind: "chicken" | "duck" | "bird" | "pigeon", f: number) {
   const art: Record<string, string[][]> = {
     chicken: [
       ["...rr...", "..owwo..", ".owwwwo.", "owwwwwo.", ".owwwo..", "..y.y..."],
@@ -543,10 +543,40 @@ export function critter(kind: "chicken" | "duck" | "bird", f: number) {
       ["o...o", ".o.o.", "..o.."],
       [".....", "ooooo", "..o.."],
     ],
+    // square pigeons: grey with a green-violet neck; frame 2 pecks
+    pigeon: [
+      ["..ss...", ".sgs...", ".svsss.", "..sssss", "...sss.", "...y.y."],
+      [".......", "..ss...", ".sgsss.", ".vssss.", "...sss.", "...y.y."],
+    ],
   };
   const rows = art[kind][f % 2];
   const p = new Px(rows[0].length + 2, rows.length + 2);
-  p.ascii(1, 1, rows, { o: "#6e5a6f", w: "#f7f1e8", r: "#e8836b", y: "#e3a43b", g: "#4f9a6b", b: "#86bedf" });
+  p.ascii(1, 1, rows, {
+    o: "#6e5a6f",
+    w: "#f7f1e8",
+    r: "#e8836b",
+    y: "#c98b6b",
+    g: "#4f9a6b",
+    b: "#86bedf",
+    s: "#a9a2b3",
+    v: "#7d6f9c",
+  });
   if (kind !== "bird") p.outline(INK);
   return p;
 }
+
+/** The Barkeep (AI): always the same look, always labelled "Barkeep · AI". */
+export const BARKEEP_LOOK: VillagerLook = {
+  body: 2,
+  skin: 3,
+  hair: 0,
+  hairColor: 1,
+  eyes: 3,
+  brows: 3,
+  top: 9,
+  topColor: 6,
+  bottom: 0,
+  bottomColor: 7,
+  shoes: 3,
+  accessory: "none",
+};

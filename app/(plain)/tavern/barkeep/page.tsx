@@ -13,6 +13,8 @@ export default async function Barkeep() {
   return (
     <Page
       title="Barkeep · AI"
+      scene={{ place: "barkeep" }}
+      size="narrow"
       sub="An AI, not a member. He reads wishes, explains matches and drafts requests; nothing happens until you approve it."
     >
       {aiEnabled() ? (

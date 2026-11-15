@@ -59,14 +59,19 @@ export default async function Receipt({ params }: { params: Promise<{ entryId: s
     ["Time", pub.createdAt],
   ];
   return (
-    <Page narrow title="Receipt" sub="Every movement of hours is one entry that can never be changed.">
+    <Page
+      title="Receipt"
+      sub="Every movement of hours is one entry that can never be changed."
+      scene={{ place: "bank" }}
+      size="narrow"
+    >
       <dl className="grid">
         {rows.map(([k, v]) => (
           <div
             key={k}
             className="flex min-h-11 items-center justify-between gap-4 border-t-2 border-paper-shade py-2 first:border-t-0"
           >
-            <dt className="font-pixel text-label">{k}</dt>
+            <dt className="field-label">{k}</dt>
             <dd className="text-right text-body first-letter:uppercase">{v}</dd>
           </div>
         ))}

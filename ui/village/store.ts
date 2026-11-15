@@ -57,6 +57,10 @@ type S = {
   scene: "village" | "tavern";
   notice: string | null;
   ready: boolean;
+  /** The first-time guide: the spotlight tour is open. */
+  tour: boolean;
+  /** Where the guide points in the world: an arrow over it and footprints leading there. */
+  waypoint: { x: number; y: number; label: string } | null;
 };
 
 let s: S = {
@@ -69,6 +73,8 @@ let s: S = {
   scene: "village",
   notice: null,
   ready: false,
+  tour: false,
+  waypoint: null,
 };
 const subs = new Set<() => void>();
 const cmds = new Set<(c: Command) => void>();
@@ -103,7 +109,7 @@ export const village = {
   },
   /** Anything over the world (sheet, dialogue, overlay) pauses walking input; the world keeps moving. */
   inputBlocked() {
-    if (s.dialog || s.overlay || s.fade) return true;
+    if (s.dialog || s.overlay || s.fade || s.tour) return true;
     if (typeof document !== "undefined") {
       if (document.querySelector("[data-sheet-open]")) return true;
       const a = document.activeElement;

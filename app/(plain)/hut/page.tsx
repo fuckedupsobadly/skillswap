@@ -6,9 +6,8 @@ import { allSkills } from "@/modules/catalog/service";
 import { progressFor } from "@/modules/game/service";
 import { availabilityOf, memberSkillsOf } from "@/modules/market/service";
 import { ensureVillager, memberCard, unreadCount } from "@/modules/village/service";
-import { Page, Section } from "@/ui/bits";
+import { Columns, Page, Section, Stack } from "@/ui/bits";
 import { KittyPreview } from "@/ui/kitty/preview";
-import { PixelIcon } from "@/ui/pixel/icons";
 import { Portrait } from "@/ui/portrait";
 import { AvailabilityForm, ProfileForm, SkillsForm } from "../hall/forms";
 import { HutLookForm, LanternForm } from "./parts";
@@ -35,125 +34,148 @@ export default async function Hut() {
   const m = viewer.member;
   const first = card?.teaches[0];
   return (
-    <Page title="Your hut" sub="Light the lantern when you're free to teach.">
-      <Section title="Lantern">
-        <LanternForm status={v.status} statusLine={v.statusLine} />
-      </Section>
+    <Page
+      title="Your hut"
+      sub="Light the lantern when you're free to teach. Everything neighbours see of you lives here."
+      scene={{
+        hut: {
+          roof: first?.color ?? "#b7a28c",
+          look: v.hut,
+          presence: card?.presence ?? v.status,
+          villager: v.look,
+          kitty: game.kitty?.code ?? null,
+          mailbox: true,
+        },
+      }}
+    >
+      <Columns>
+        <Stack>
+          <Section title="Lantern" icon="lantern">
+            <LanternForm status={v.status} statusLine={v.statusLine} />
+          </Section>
 
-      <Section title="Your villager">
-        <div className="flex items-center gap-4">
-          <div className="bg-paper-shade">
-            <Portrait look={v.look} size={48} />
-          </div>
-          <div className="grid min-w-0 flex-1 gap-0.5">
-            <span className="font-name text-name">{m.displayName}</span>
-            <span className="text-meta text-ink-soft">
-              {card?.presenceLabel ?? "Busy"}
-              {card?.teaches.length
-                ? ` · teaches ${card.teaches.map((t) => t.name).join(", ")}`
-                : " · nothing to teach yet"}
-            </span>
-          </div>
-          <Link href="/gate/villager" className="btn btn-secondary">
-            Change look
-          </Link>
-        </div>
-      </Section>
-
-      <Section title="The hut">
-        <HutLookForm
-          initial={v.hut}
-          roof={first?.color ?? "#b7a28c"}
-          guild={first?.guild ?? null}
-          status={v.status}
-          kitty={game.kitty?.code ?? null}
-        />
-      </Section>
-
-      <Section
-        title="Mailbox"
-        aside={
-          <Link href="/inbox" className="btn btn-tertiary -my-2 -mr-2">
-            Open
-          </Link>
-        }
-      >
-        <p className="flex items-center gap-2 text-ink-soft">
-          <PixelIcon name="mailbox" size={16} />
-          {unread
-            ? `${unread} new ${unread === 1 ? "note" : "notes"} waiting.`
-            : "No new notes. Neighbours leave them here when you're out."}
-        </p>
-      </Section>
-
-      <div id="kitty" className="scroll-mt-20">
-        <Section
-          title="Kitty"
-          aside={
-            game.kitty ? (
-              <Link href="/kitty" className="btn btn-tertiary -my-2 -mr-2">
-                Wardrobe
-              </Link>
-            ) : null
-          }
-        >
-          {game.kitty ? (
+          <Section title="Your villager" icon="sign">
             <div className="flex items-center gap-4">
               <div className="bg-paper-shade">
-                <KittyPreview
-                  code={game.kitty.code}
-                  stage={game.kitty.stage}
-                  equipped={game.kitty.equipped}
-                  scale={1}
-                  label={`${game.kitty.name}, your kitty`}
-                />
+                <Portrait look={v.look} size={48} />
               </div>
-              <div className="grid gap-0.5">
-                <span className="font-name text-name">{game.kitty.name}</span>
+              <div className="grid min-w-0 flex-1 gap-0.5">
+                <span className="font-name text-name">{m.displayName}</span>
                 <span className="text-meta text-ink-soft">
-                  Level {game.level} · {game.rankName}. Sleeps on your step while you're away.
+                  {card?.presenceLabel ?? "Busy"}
+                  {card?.teaches.length
+                    ? ` · teaches ${card.teaches.map((t) => t.name).join(", ")}`
+                    : " · nothing to teach yet"}
                 </span>
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-ink-soft">The step is empty. A kitten is waiting at the Gate.</p>
-              <Link href="/gate/kitty" className="btn btn-secondary">
-                Meet the kittens
+              <Link href="/gate/villager" className="btn btn-secondary">
+                Change look
               </Link>
             </div>
-          )}
-        </Section>
-      </div>
+          </Section>
 
-      <Section title="About you">
-        <ProfileForm
-          initial={{ displayName: m.displayName, bio: m.bio, timezone: m.timezone, languages: m.languages }}
-        />
-      </Section>
+          <Section title="The hut" icon="sign">
+            <HutLookForm
+              initial={v.hut}
+              roof={first?.color ?? "#b7a28c"}
+              guild={first?.guild ?? null}
+              status={v.status}
+              kitty={game.kitty?.code ?? null}
+            />
+          </Section>
 
-      <div id="skills" className="scroll-mt-20">
-        <Section title="Teach and learn">
-          <SkillsForm
-            options={options.map((o) => ({ id: o.id, name: o.name, category: o.category }))}
-            teach={mine
-              .filter((s) => s.direction === "teach")
-              .map((s) => ({ skillId: s.skillId, level: s.level }))}
-            learn={mine
-              .filter((s) => s.direction === "learn")
-              .map((s) => ({ skillId: s.skillId, level: s.level }))}
-          />
-        </Section>
-      </div>
+          <Section
+            title="Mailbox"
+            icon="mailbox"
+            aside={
+              <Link href="/inbox" className="btn btn-tertiary -my-2 -mr-2">
+                Open
+              </Link>
+            }
+          >
+            <p className="text-ink-soft">
+              {unread
+                ? `${unread} new ${unread === 1 ? "note" : "notes"} waiting.`
+                : "No new notes. Neighbours leave them here when you're out."}
+            </p>
+          </Section>
 
-      <div id="availability" className="scroll-mt-20">
-        <Section title="When you're around">
-          <AvailabilityForm
-            rules={avail.map(({ weekday, startMin, endMin }) => ({ weekday, startMin, endMin }))}
-            timezone={m.timezone}
-          />
-        </Section>
-      </div>
+          <div id="kitty" className="scroll-mt-20">
+            <Section
+              title="Kitty"
+              aside={
+                game.kitty ? (
+                  <Link href="/kitty" className="btn btn-tertiary -my-2 -mr-2">
+                    Wardrobe
+                  </Link>
+                ) : null
+              }
+            >
+              {game.kitty ? (
+                <div className="flex items-center gap-4">
+                  <div className="bg-paper-shade">
+                    <KittyPreview
+                      code={game.kitty.code}
+                      stage={game.kitty.stage}
+                      equipped={game.kitty.equipped}
+                      scale={1}
+                      label={`${game.kitty.name}, your kitty`}
+                    />
+                  </div>
+                  <div className="grid gap-0.5">
+                    <span className="font-name text-name">{game.kitty.name}</span>
+                    <span className="text-meta text-ink-soft">
+                      Level {game.level} · {game.rankName}. Sleeps on your step while you're away.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-ink-soft">The step is empty. A kitten is waiting at the Gate.</p>
+                  <Link href="/gate/kitty" className="btn btn-secondary">
+                    Meet the kittens
+                  </Link>
+                </div>
+              )}
+            </Section>
+          </div>
+        </Stack>
+        <Stack>
+          <Section title="About you" icon="book">
+            <ProfileForm
+              initial={{
+                displayName: m.displayName,
+                bio: m.bio,
+                timezone: m.timezone,
+                languages: m.languages,
+              }}
+            />
+          </Section>
+
+          <div id="skills" className="scroll-mt-20">
+            <Section title="Teach and learn" icon="lute">
+              <SkillsForm
+                options={options.map((o) => ({ id: o.id, name: o.name, category: o.category }))}
+                teach={mine
+                  .filter((s) => s.direction === "teach")
+                  .map((s) => ({ skillId: s.skillId, level: s.level }))}
+                learn={mine
+                  .filter((s) => s.direction === "learn")
+                  .map((s) => ({ skillId: s.skillId, level: s.level }))}
+              />
+            </Section>
+          </div>
+
+          <div id="availability" className="scroll-mt-20">
+            <Section title="When you're around" icon="hourglass">
+              <AvailabilityForm
+                rules={avail.map(({ weekday, startMin, endMin }) => ({ weekday, startMin, endMin }))}
+                timezone={m.timezone}
+              />
+            </Section>
+          </div>
+        </Stack>
+      </Columns>
     </Page>
   );
 }

@@ -230,14 +230,51 @@ export const PLOTS: Plot[] = (() => {
 export const SPAWN = { x: 31, y: 44 };
 
 type Prop = { kind: string; x: number; y: number };
+/** The mosaic around the Well (tile units): centre and radius. Drawn as one image by the engine. */
+export const PLAZA = { x: 31.5, y: 22.5, r: 5.5 };
+
+/** Lamp posts on the square (tile coords); pairs carry bunting between them. */
+export const LAMPS: [number, number][] = [
+  [29, 16],
+  [34, 16],
+  [24, 20],
+  [24, 25],
+  [39, 20],
+  [39, 25],
+  [30, 33],
+  [33, 33],
+];
+export const BUNTING: [number, number][] = [
+  [0, 1],
+  [6, 7],
+];
+
 export const PROPS: Prop[] = [
+  // the square: lamps, planters, a flower cart, crates by the tavern
+  ...LAMPS.map(([x, y]) => ({ kind: "lamp", x, y })),
+  { kind: "planter", x: 27, y: 18 },
+  { kind: "planter", x: 36, y: 18 },
+  { kind: "planter", x: 27, y: 27 },
+  { kind: "planter", x: 36, y: 26 },
+  { kind: "planterTree", x: 20, y: 20 },
+  { kind: "planterTree", x: 43, y: 19 },
+  { kind: "planterTree", x: 43, y: 31 },
+  { kind: "planterTree", x: 20, y: 33 },
+  { kind: "flowerCart", x: 21, y: 25 },
+  { kind: "crates", x: 19, y: 26 },
+  { kind: "crates", x: 26, y: 26 },
+  { kind: "planter", x: 22, y: 14 },
+  { kind: "planter", x: 26, y: 14 },
+  { kind: "planter", x: 37, y: 14 },
+  { kind: "bench", x: 26, y: 20 },
+  { kind: "bench", x: 36, y: 20 },
+  { kind: "planterTree", x: 34, y: 15 },
   // around the square
   { kind: "tree", x: 19, y: 15 },
   { kind: "tree", x: 43, y: 24 },
   { kind: "bench", x: 27, y: 24 },
   { kind: "bench", x: 34, y: 24 },
-  { kind: "barrel", x: 26, y: 30 },
-  { kind: "paperLantern", x: 29, y: 21 },
+  { kind: "barrel", x: 19, y: 29 },
   // guild cues
   { kind: "target", x: 18, y: 2 },
   { kind: "oven", x: 42, y: 10 },
@@ -285,8 +322,10 @@ export function groundGrid(): Ground[][] {
   fill(0, 5, MAP_W, 2, "path");
   fill(0, 12, MAP_W, 2, "path");
   fill(31, 5, 2, 9, "path");
-  // Town Square
+  // Town Square: paving, crossed by two brick avenues that carry the roads through to the lanes and the gate
   fill(19, 14, 26, 20, "stone");
+  fill(31, 14, 2, 20, "brick");
+  fill(19, 22, 26, 2, "brick");
   // Residential lanes
   for (const y of [18, 23, 28, 33]) {
     fill(1, y, 18, 1, "path");
@@ -316,7 +355,8 @@ function variant(g: Ground[][], x: number, y: number) {
     const n = g[y + dy]?.[x + dx];
     if (!n) return false;
     if (k === "water") return n !== "water" && n !== "dock";
-    if (k === "stone") return n !== "stone";
+    if (k === "stone") return n !== "stone" && n !== "brick";
+    if (k === "brick") return n !== "brick";
     return n === "grass";
   };
   const mask = (diff(0, -1) ? 1 : 0) | (diff(1, 0) ? 2 : 0) | (diff(0, 1) ? 4 : 0) | (diff(-1, 0) ? 8 : 0);
@@ -341,15 +381,19 @@ export function collisionGrid(): boolean[][] {
     for (let y = 39; y < 42; y++) for (let x = sx; x < sx + 3; x++) block[y][x] = true;
   for (const plot of PLOTS)
     for (let y = plot.y; y < plot.y + 3; y++) for (let x = plot.x; x < plot.x + 3; x++) block[y][x] = true;
-  for (const pr of PROPS)
-    if (
-      pr.kind === "tree" ||
-      pr.kind === "pine" ||
-      pr.kind === "barrel" ||
-      pr.kind === "oven" ||
-      pr.kind === "woodstack"
-    )
-      block[pr.y][pr.x] = true;
+  const solid = new Set([
+    "tree",
+    "pine",
+    "barrel",
+    "oven",
+    "woodstack",
+    "lamp",
+    "planter",
+    "planterTree",
+    "flowerCart",
+    "crates",
+  ]);
+  for (const pr of PROPS) if (solid.has(pr.kind)) block[pr.y][pr.x] = true;
   for (let y = 37; y < 39; y++) for (let x = 15; x < 17; x++) block[y][x] = false; // the dock is walkable
   return block;
 }
@@ -367,6 +411,36 @@ export function tiledMap() {
     for (let x = 0; x < MAP_W; x++) {
       ground.push(variant(g, x, y));
       const free = g[y][x] === "grass" && !block[y][x] && hash2(x, y, 9) < 0.06;
+      // Paving details on the square, kept off the mosaic around the Well.
+      const paved =
+        (g[y][x] === "stone" || g[y][x] === "brick") &&
+        !block[y][x] &&
+        Math.hypot(x + 0.5 - PLAZA.x, y + 0.5 - PLAZA.y) > PLAZA.r + 0.6;
+      const pd = hash2(x, y, 14);
+      if (paved && pd < 0.11) {
+        const pick = hash2(x, y, 15);
+        decor.push(
+          gid(
+            g[y][x] === "brick"
+              ? pick < 0.5
+                ? "leaves"
+                : "petals"
+              : pick < 0.3
+                ? "crack"
+                : pick < 0.55
+                  ? "moss"
+                  : pick < 0.7
+                    ? "leaves"
+                    : pick < 0.8
+                      ? "petals"
+                      : pick < 0.9
+                        ? "puddle"
+                        : "grate",
+          ),
+        );
+        collide.push(block[y][x] ? 1 : 0);
+        continue;
+      }
       decor.push(
         free
           ? gid(

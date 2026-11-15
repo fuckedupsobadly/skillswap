@@ -69,14 +69,16 @@ export function AdoptForm({
               />
               <KittyPreview code={code} label={describeGenome(g)} scale={3} />
               <span className="text-center text-meta">{describeGenome(g)}</span>
-              {rare.length ? <span className="font-pixel text-label">{rare.join(", ")}</span> : null}
+              {rare.length ? (
+                <span className="bg-paper-shade px-2 text-meta font-semibold">{rare.join(", ")}</span>
+              ) : null}
             </label>
           );
         })}
       </fieldset>
 
       <div className={cn("grid gap-3", picked ? "" : "pointer-events-none")} aria-disabled={!picked}>
-        <label htmlFor="kitty-name" className="font-pixel text-label">
+        <label htmlFor="kitty-name" className="field-label">
           {picked ? "Name your kitten" : "Pick a kitten first, then name it"}
         </label>
         <Input

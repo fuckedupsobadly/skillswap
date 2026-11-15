@@ -6,7 +6,8 @@ import type { VercelConfig } from "@vercel/config/v1";
  */
 export const config: VercelConfig = {
   framework: "nextjs",
-  buildCommand: "npm run build",
+  // Migrate and seed Neon first (idempotent; skipped when DATABASE_URL is absent), then build.
+  buildCommand: "npm run db:deploy && npm run build",
   // Daily, so it also works on the Hobby plan. Between runs, sweeps happen in the outbox relay (and every
   // 5 minutes in Inngest when connected).
   crons: [{ path: "/api/cron/sweep?nightly=1", schedule: "0 3 * * *" }],

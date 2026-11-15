@@ -47,7 +47,10 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           // The Lantern Room frames the video call, so the call's origin may use the camera and microphone too.
-          { key: "Permissions-Policy", value: `camera=(self "https://${jitsi}"), microphone=(self "https://${jitsi}"), display-capture=(self "https://${jitsi}"), geolocation=(self)` },
+          {
+            key: "Permissions-Policy",
+            value: `camera=(self "https://${jitsi}"), microphone=(self "https://${jitsi}"), display-capture=(self "https://${jitsi}"), geolocation=(self)`,
+          },
         ],
       },
     ];

@@ -39,7 +39,7 @@ export function ChoiceRow<T extends string | number>({
 }) {
   return (
     <fieldset className={cn("min-w-0", className)} disabled={disabled}>
-      <legend className={showLegend ? "mb-1.5 font-pixel text-label" : "sr-only"}>{legend}</legend>
+      <legend className={showLegend ? "field-label mb-1.5" : "sr-only"}>{legend}</legend>
       <div
         className={cn(
           "flex flex-wrap items-center",

@@ -32,12 +32,19 @@ export async function open(opts: { dataDir?: string; seed?: boolean } = {}): Pro
   if (process.env.DATABASE_URL && !opts.dataDir) {
     const { Pool } = await import("pg");
     const { drizzle } = await import("drizzle-orm/node-postgres");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
+    // Small by default: serverless instances are many, and Neon's pooler multiplexes them. Tunable per deploy.
+    const max = Math.max(1, Number(process.env.DATABASE_POOL_MAX) || 5);
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL, max });
     const db = drizzle(pool, { schema }) as unknown as DB;
     await ensureGame(db);
     return { db, driver: "pg", close: () => pool.end() };
   }
-  const opened = await openPglite(opts.dataDir ?? process.env.PGLITE_DIR ?? ".pglite");
+  // On Vercel without a database (a fork, or a preview before Neon is connected) the project folder is
+  // read-only: keep the embedded database in /tmp. It is per-instance and temporary — fine for a demo.
+  const fallback = process.env.VERCEL ? "/tmp/skillswap-pglite" : ".pglite";
+  if (process.env.VERCEL && !opts.dataDir && !process.env.PGLITE_DIR)
+    console.warn("No DATABASE_URL: using a temporary embedded database in /tmp. Connect Neon to keep data.");
+  const opened = await openPglite(opts.dataDir ?? process.env.PGLITE_DIR ?? fallback);
   if (opts.seed ?? true) {
     const { ensureSeeded } = await import("./seed-data");
     await ensureSeeded(opened.db);

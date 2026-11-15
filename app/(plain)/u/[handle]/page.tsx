@@ -10,7 +10,7 @@ import { formatMinutes, levelName } from "@/modules/platform/format";
 import { TRUST_NAMES } from "@/modules/trust/reputation";
 import { memberCard } from "@/modules/village/service";
 import { describeAvailability } from "@/modules/village/when";
-import { Empty, Hours, Page, Section, Stars } from "@/ui/bits";
+import { Columns, Empty, Hours, Page, Section, Stack, Stars } from "@/ui/bits";
 import { ItemIcon } from "@/ui/kitty/item-icon";
 import { KittyPreview } from "@/ui/kitty/preview";
 import { PixelIcon } from "@/ui/pixel/icons";
@@ -62,9 +62,35 @@ export default async function Profile({ params }: { params: Promise<{ handle: st
   return (
     <Page
       title={`${first}'s hut`}
+      sub={
+        /* Portrait and nameplate, as in the dialogue box. */
+        <div className="flex items-center gap-4">
+          <div className="window shrink-0">
+            <Portrait look={card.look} size={64} />
+          </div>
+          <div className="grid min-w-0 gap-0.5">
+            <span className="font-name text-name text-ink">{member.displayName}</span>
+            <span className="text-meta text-ink-soft">
+              {card.presenceLabel} · Trust {member.trustLevel} ({TRUST_NAMES[member.trustLevel]}) ·{" "}
+              <Stars value={p.rating} count={p.reviews.length} />
+              {game.showRank ? ` · ${game.rankName}` : ""}
+              {member.isSample ? " · Sample" : ""}
+            </span>
+          </div>
+        </div>
+      }
+      scene={{
+        hut: {
+          roof: card.roof,
+          look: card.hut,
+          presence: card.presence,
+          villager: card.presence === "free" || card.presence === "busy" ? card.look : null,
+          kitty: game.kitty?.code ?? null,
+        },
+      }}
       action={
         !isMe ? (
-          <ShowOnMap handle={member.handle} className="btn btn-tertiary -mr-2" />
+          <ShowOnMap handle={member.handle} className="btn btn-secondary" />
         ) : (
           <Link href="/hut" className="btn btn-secondary">
             Edit your hut
@@ -72,168 +98,161 @@ export default async function Profile({ params }: { params: Promise<{ handle: st
         )
       }
     >
-      {/* Portrait and nameplate above the words, as in the dialogue box. */}
-      <div className="-mt-2 flex items-center gap-4">
-        <div className="bg-paper-shade">
-          <Portrait look={card.look} size={48} />
-        </div>
-        <div className="grid min-w-0 gap-0.5">
-          <span className="font-name text-name">{member.displayName}</span>
-          <span className="text-meta text-ink-soft">
-            {card.presenceLabel} · Trust {member.trustLevel} ({TRUST_NAMES[member.trustLevel]}) ·{" "}
-            <Stars value={p.rating} count={p.reviews.length} />
-            {game.showRank ? ` · ${game.rankName}` : ""}
-            {member.isSample ? " · Sample" : ""}
-          </span>
-        </div>
-      </div>
       {card.statusLine ? (
-        <blockquote className="-mt-2 border-l-4 border-paper-shade pl-3">“{card.statusLine}”</blockquote>
+        <blockquote className="speech -mt-2 max-w-[60ch] px-4 py-2.5">“{card.statusLine}”</blockquote>
       ) : null}
       {member.isSample ? (
-        <p className="-mt-2 text-meta text-ink-soft">
-          Sample members are seeded for the demo. They accept and confirm on their own, so their lantern is
-          really lit.
+        <p className="-mt-4 text-meta text-ink-soft">
+          Sample members are seeded for the demo. They accept and confirm bookings on their own.
         </p>
       ) : null}
 
-      <Section title="Teaches">
-        {card.teaches.length === 0 ? (
-          <Empty>Not teaching anything yet.</Empty>
-        ) : (
-          <ul className="grid gap-2">
-            {card.teaches.map((t, i) => {
-              const len = Math.min(...t.lengths);
-              const href =
-                t.offerId && !isMe
-                  ? `/book/${t.offerId}?len=${len}${free ? "&now=1" : ""}`
-                  : `/skills/${t.slug}`;
-              return (
-                <li key={t.slug}>
-                  <Link href={href} className="card flex min-h-14 items-center gap-3 px-3 py-2">
-                    <span
-                      aria-hidden
-                      className="grid h-7 w-7 shrink-0 place-items-center"
-                      style={{ background: t.color }}
-                    >
-                      <PixelIcon name={t.icon} size={16} />
+      <Columns>
+        <Stack>
+          <Section title="Teaches" icon="book">
+            {card.teaches.length === 0 ? (
+              <Empty>Not teaching anything yet.</Empty>
+            ) : (
+              <ul className="grid gap-2">
+                {card.teaches.map((t, i) => {
+                  const len = Math.min(...t.lengths);
+                  const href =
+                    t.offerId && !isMe
+                      ? `/book/${t.offerId}?len=${len}${free ? "&now=1" : ""}`
+                      : `/skills/${t.slug}`;
+                  return (
+                    <li key={t.slug}>
+                      <Link href={href} className="card flex min-h-14 items-center gap-3 px-3 py-2">
+                        <span
+                          aria-hidden
+                          className="grid h-7 w-7 shrink-0 place-items-center"
+                          style={{ background: t.color }}
+                        >
+                          <PixelIcon name={t.icon} size={16} />
+                        </span>
+                        <span className="grid min-w-0 flex-1 gap-0.5">
+                          <span className="font-medium">{t.name}</span>
+                          <span className="text-meta text-ink-soft">
+                            {levelName(t.level)} · {t.guild}
+                          </span>
+                        </span>
+                        {t.offerId && !isMe ? (
+                          // The first row's button is gold only when a lesson can really start now.
+                          <span className={`btn ${free && i === 0 ? "btn-primary" : "btn-secondary"}`}>
+                            Book {formatMinutes(len)}
+                          </span>
+                        ) : null}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Section>
+
+          {card.learning.length ? (
+            <Section title="Learning" icon="search">
+              <p>{card.learning.join(", ")}</p>
+            </Section>
+          ) : null}
+
+          <Section title="Usually around" icon="hourglass">
+            <p>
+              {usually}
+              <span className="text-meta text-ink-soft"> · {member.timezone.replace("_", " ")}</span>
+            </p>
+            {card.nextFree.length && !isMe ? (
+              <p className="tnum text-ink-soft">
+                Next free {card.nextFree.map((n) => timeIn(n, tz)).join(" · ")}
+              </p>
+            ) : null}
+            {!isMe && viewer ? (
+              <div className="flex flex-wrap gap-2">
+                <Link href={`/inbox?to=${member.handle}`} className="btn btn-secondary">
+                  <PixelIcon name="mailbox" size={16} />
+                  Leave a note
+                </Link>
+              </div>
+            ) : null}
+          </Section>
+
+          {member.bio ? (
+            <Section title="About" icon="sign">
+              <p className="whitespace-pre-line">{member.bio}</p>
+              <p className="text-meta text-ink-soft">
+                {p.stats.taught} taught · {p.stats.learned} learned · <Hours min={p.stats.taughtMin} /> given
+                {member.languages.length ? ` · speaks ${member.languages.join(", ")}` : ""}
+              </p>
+            </Section>
+          ) : null}
+        </Stack>
+        <Stack>
+          {game.kitty ? (
+            <Section title="On the step" icon="menu">
+              <figure data-perch="" data-kitty-visit={canVisit ? "" : undefined} className="grid gap-3">
+                <div className="justify-self-start border-2 border-ink">
+                  <KittyPreview
+                    code={game.kitty.code}
+                    stage={game.kitty.stage}
+                    equipped={game.kitty.equipped}
+                    scale={3}
+                    room={{
+                      theme: game.kitty.roomTheme,
+                      item: game.kitty.equipped.room,
+                      bed: game.kitty.equipped.bed,
+                    }}
+                    label={`${game.kitty.name}, ${first}'s kitty`}
+                  />
+                </div>
+                <figcaption className="text-ink-soft">
+                  <span className="font-pixel text-label text-ink">{game.kitty.name}</span>
+                  {game.showRank ? ` · level ${game.level}` : ""}
+                </figcaption>
+                {game.badges.length ? (
+                  <ul className="flex flex-wrap gap-1.5" aria-label="Badges">
+                    {game.badges.map((b) => (
+                      <li
+                        key={b.id}
+                        title={b.name}
+                        className="grid h-10 w-10 place-items-center bg-paper-shade"
+                      >
+                        <ItemIcon id={achievementById.get(b.id)?.itemId ?? "yarn"} size={30} />
+                        <span className="sr-only">{b.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </figure>
+            </Section>
+          ) : null}
+
+          <Section title={`Reviews (${p.reviews.length})`} icon="sign">
+            {p.reviews.length === 0 ? (
+              <Empty>No reviews yet.</Empty>
+            ) : (
+              <ul className="grid">
+                {p.reviews.slice(0, 8).map((r) => (
+                  <li
+                    key={`${r.author}${String(r.createdAt)}`}
+                    className="grid gap-1 border-t-2 border-paper-shade py-3 first:border-t-0 first:pt-0"
+                  >
+                    <span className="tnum text-meta text-ink-soft">
+                      {r.rating} of 5 · {r.author}
                     </span>
-                    <span className="grid min-w-0 flex-1 gap-0.5">
-                      <span className="font-medium">{t.name}</span>
-                      <span className="text-meta text-ink-soft">
-                        {levelName(t.level)} · {t.guild}
-                      </span>
-                    </span>
-                    {t.offerId && !isMe ? (
-                      // The first row's button is gold only when a lesson can really start now.
-                      <span className={`btn ${free && i === 0 ? "btn-primary" : "btn-secondary"}`}>
-                        Book {formatMinutes(len)}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Section>
-
-      {card.learning.length ? (
-        <Section title="Learning">
-          <p>{card.learning.join(", ")}</p>
-        </Section>
-      ) : null}
-
-      <Section title="Usually around">
-        <p>
-          {usually}
-          <span className="text-meta text-ink-soft"> · {member.timezone.replace("_", " ")}</span>
-        </p>
-        {card.nextFree.length && !isMe ? (
-          <p className="tnum text-ink-soft">
-            Next free {card.nextFree.map((n) => timeIn(n, tz)).join(" · ")}
-          </p>
-        ) : null}
-        {!isMe && viewer ? (
-          <div className="flex flex-wrap gap-2">
-            <Link href={`/inbox?to=${member.handle}`} className="btn btn-secondary">
-              <PixelIcon name="mailbox" size={16} />
-              Leave a note
-            </Link>
-          </div>
-        ) : null}
-      </Section>
-
-      {member.bio ? (
-        <Section title="About">
-          <p className="whitespace-pre-line">{member.bio}</p>
-          <p className="text-meta text-ink-soft">
-            {p.stats.taught} taught · {p.stats.learned} learned · <Hours min={p.stats.taughtMin} /> given
-            {member.languages.length ? ` · speaks ${member.languages.join(", ")}` : ""}
-          </p>
-        </Section>
-      ) : null}
-
-      {game.kitty ? (
-        <Section title="On the step">
-          <figure data-perch="" data-kitty-visit={canVisit ? "" : undefined} className="grid gap-3">
-            <div className="justify-self-start border-2 border-ink">
-              <KittyPreview
-                code={game.kitty.code}
-                stage={game.kitty.stage}
-                equipped={game.kitty.equipped}
-                scale={3}
-                room={{
-                  theme: game.kitty.roomTheme,
-                  item: game.kitty.equipped.room,
-                  bed: game.kitty.equipped.bed,
-                }}
-                label={`${game.kitty.name}, ${first}'s kitty`}
-              />
-            </div>
-            <figcaption className="text-ink-soft">
-              <span className="font-pixel text-label text-ink">{game.kitty.name}</span>
-              {game.showRank ? ` · level ${game.level}` : ""}
-            </figcaption>
-            {game.badges.length ? (
-              <ul className="flex flex-wrap gap-1.5" aria-label="Badges">
-                {game.badges.map((b) => (
-                  <li key={b.id} title={b.name} className="grid h-10 w-10 place-items-center bg-paper-shade">
-                    <ItemIcon id={achievementById.get(b.id)?.itemId ?? "yarn"} size={30} />
-                    <span className="sr-only">{b.name}</span>
+                    {r.text ? <p>{r.text}</p> : null}
                   </li>
                 ))}
               </ul>
-            ) : null}
-          </figure>
-        </Section>
-      ) : null}
+            )}
+          </Section>
 
-      <Section title={`Reviews (${p.reviews.length})`}>
-        {p.reviews.length === 0 ? (
-          <Empty>No reviews yet.</Empty>
-        ) : (
-          <ul className="grid">
-            {p.reviews.slice(0, 8).map((r) => (
-              <li
-                key={`${r.author}${String(r.createdAt)}`}
-                className="grid gap-1 border-t-2 border-paper-shade py-3 first:border-t-0 first:pt-0"
-              >
-                <span className="tnum text-meta text-ink-soft">
-                  {r.rating} of 5 · {r.author}
-                </span>
-                {r.text ? <p>{r.text}</p> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      {!isMe && viewer ? (
-        <div className="divider pt-4">
-          <ReportBlock subjectId={member.id} />
-        </div>
-      ) : null}
+          {!isMe && viewer ? (
+            <div className="divider pt-4">
+              <ReportBlock subjectId={member.id} />
+            </div>
+          ) : null}
+        </Stack>
+      </Columns>
     </Page>
   );
 }

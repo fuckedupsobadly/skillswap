@@ -5,7 +5,7 @@ import { formatDateTime } from "@/modules/booking/slots";
 import { walletSummary } from "@/modules/ledger/service";
 import { formatHours } from "@/modules/platform/format";
 import { POOL_EVERY_DAYS, POOL_GRANT, POOL_MAX_BALANCE, poolStatus } from "@/modules/village/service";
-import { Page, Section } from "@/ui/bits";
+import { Columns, Page, Section, Stack } from "@/ui/bits";
 import { GiftForm } from "../bank/gift";
 import { AskPool } from "./parts";
 
@@ -29,31 +29,35 @@ export default async function Pond() {
     <Page
       title="Community Pond"
       sub="Hours that members gave so newcomers and people in a rough patch can still learn."
+      scene={{ place: "pond" }}
     >
-      <dl className="grid grid-cols-2 gap-px bg-paper-shade">
-        <div className="grid gap-1 bg-paper py-1 pr-4">
-          <dt className="font-pixel text-label">In the pond</dt>
-          <dd className="tnum font-medium">{formatHours(s.poolMin)}</dd>
-        </div>
-        <div className="grid gap-1 bg-paper py-1 pl-4">
-          <dt className="font-pixel text-label">Given by</dt>
-          <dd className="tnum font-medium">
-            {s.donors} {s.donors === 1 ? "member" : "members"}
-          </dd>
-        </div>
-      </dl>
+      <Columns>
+        <Stack>
+          <dl className="window grid grid-cols-2 divide-x-2 divide-paper-shade">
+            <div className="grid gap-1 px-4 py-3">
+              <dt className="field-label text-ink-soft">In the pond</dt>
+              <dd className="tnum text-name font-semibold">{formatHours(s.poolMin)}</dd>
+            </div>
+            <div className="grid gap-1 px-4 py-3">
+              <dt className="field-label text-ink-soft">Given by</dt>
+              <dd className="tnum text-name font-semibold">
+                {s.donors} {s.donors === 1 ? "member" : "members"}
+              </dd>
+            </div>
+          </dl>
 
-      <Section title="Ask for an hour">
-        <p className="text-ink-soft">
-          If you have under {formatHours(POOL_MAX_BALANCE)}, the pond gives you {formatHours(POOL_GRANT)},
-          once every {POOL_EVERY_DAYS} days.
-        </p>
-        <AskPool eligible={s.eligible} reason={reason} />
-      </Section>
-
-      <Section title="Give to the pond">
-        <GiftForm max={Math.max(0, w.balanceMin)} community />
-      </Section>
+          <Section title="Ask for an hour" icon="hourglass">
+            <p className="text-ink-soft">
+              If you have under {formatHours(POOL_MAX_BALANCE)}, the pond gives you {formatHours(POOL_GRANT)},
+              once every {POOL_EVERY_DAYS} days.
+            </p>
+            <AskPool eligible={s.eligible} reason={reason} />
+          </Section>
+        </Stack>
+        <Section title="Give to the pond" icon="sign">
+          <GiftForm max={Math.max(0, w.balanceMin)} community />
+        </Section>
+      </Columns>
     </Page>
   );
 }

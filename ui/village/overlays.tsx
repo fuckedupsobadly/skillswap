@@ -24,7 +24,14 @@ export function MapOverlay() {
     if (!c) return;
     const ctx = c.getContext("2d")!;
     const g = groundGrid();
-    const col = { grass: C.grass, path: C.path, stone: C.stone, water: C.water, dock: C.wood } as const;
+    const col = {
+      grass: C.grass,
+      path: C.path,
+      stone: C.stone,
+      water: C.water,
+      dock: C.wood,
+      brick: C.brick,
+    } as const;
     for (let y = 0; y < MAP_H; y++)
       for (let x = 0; x < MAP_W; x++) {
         ctx.fillStyle = col[g[y][x]];
@@ -256,7 +263,7 @@ export function SearchOverlay() {
                   className={`grid w-full gap-0.5 px-2 py-2 text-left ${i === active ? "bg-paper-shade" : "hover:bg-paper-shade"}`}
                 >
                   <span>
-                    <span className="font-pixel text-label">{r.label}</span>{" "}
+                    <span className="font-semibold">{r.label}</span>{" "}
                     <span className="text-meta text-ink-soft">{r.kind}</span>
                   </span>
                   <span className="text-meta text-ink-soft">{r.sub}</span>

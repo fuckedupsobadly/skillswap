@@ -12,14 +12,14 @@ export default async function Gate() {
   const viewer = await getViewer();
   if (!viewer)
     return (
-      <Page title="The Gate" sub="Opening the gate for you…">
+      <Page title="The Gate" sub="Opening the gate for you…" scene={{ place: "gate" }} size="narrow">
         {null}
       </Page>
     );
   const v = await ensureVillager(await getDb(), viewer.memberId);
   if (v.onboardingStep === 2) redirect("/gate/villager");
   return (
-    <Page title="The Gate">
+    <Page title="The Gate" scene={{ place: "gate" }} size="narrow">
       <GateWelcome firstVisit={v.onboardingStep <= 1} />
     </Page>
   );

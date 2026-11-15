@@ -23,7 +23,7 @@ export default async function Swap({ params }: { params: Promise<{ cycleId: stri
   const edges = c.edgesNamed;
   const last = edges[edges.length - 1];
   return (
-    <Page title={`A swap for ${SIZE[c.members.length]}`}>
+    <Page title={`A swap for ${SIZE[c.members.length]}`} scene={{ place: "tavern" }} size="narrow">
       {/* The loop: you teach the next person, they teach the next, and the last teaches you. */}
       <figure aria-label="Who teaches whom" className="grid gap-1 overflow-x-auto">
         <div className="flex items-start">

@@ -25,9 +25,13 @@ export const C = {
   flowerC: "#b49ad8",
   leaf: "#5e9e57",
   leafShade: "#3f7a41",
+  brick: "#c98b6b",
+  brickShade: "#a86d50",
+  brickLight: "#dba287",
+  mortar: "#8f7068",
 };
 
-export type Ground = "grass" | "path" | "stone" | "water" | "dock";
+export type Ground = "grass" | "path" | "stone" | "water" | "dock" | "brick";
 
 const tiles: { name: string; draw: (p: Px) => void }[] = [];
 const index = new Map<string, number>();
@@ -117,6 +121,37 @@ function edged(kind: "path" | "stone" | "water", mask: number) {
 for (const kind of ["path", "stone", "water"] as const)
   for (let m = 0; m < 16; m++) add(`${kind}${m}`, edged(kind, m));
 
+/**
+ * The square's avenues: basket-weave brick (pairs of bricks turning 90° every 8 px) with a stone curb
+ * wherever brick meets paving, so the plaza reads as laid by hand rather than filled.
+ */
+function brick(mask: number) {
+  return (p: Px) => {
+    for (let by = 0; by < 2; by++)
+      for (let bx = 0; bx < 2; bx++) {
+        const horizontal = (bx + by) % 2 === 0;
+        for (let k = 0; k < 2; k++) {
+          const x0 = bx * 8 + (horizontal ? 0 : k * 4);
+          const y0 = by * 8 + (horizontal ? k * 4 : 0);
+          const w = horizontal ? 8 : 4;
+          const h = horizontal ? 4 : 8;
+          const v = hash2(bx * 2 + k, by + mask * 3, 61);
+          const fill = v < 0.18 ? C.brickShade : v > 0.86 ? C.brickLight : C.brick;
+          p.rect(x0, y0, w, h, fill);
+          // mortar on the right and bottom of each brick, a sunlit top-left pixel
+          p.hline(x0, y0 + h - 1, w, C.mortar).vline(x0 + w - 1, y0, h, C.mortar);
+          p.set(x0, y0, C.brickLight);
+        }
+      }
+    const curb = mix(INK, C.stone, 0.45);
+    if (mask & 1) p.hline(0, 0, T, curb).hline(0, 1, T, C.stoneLight);
+    if (mask & 4) p.hline(0, 15, T, curb).hline(0, 14, T, C.stoneLight);
+    if (mask & 8) p.vline(0, 0, T, curb).vline(1, 0, T, C.stoneLight);
+    if (mask & 2) p.vline(15, 0, T, curb).vline(14, 0, T, C.stoneLight);
+  };
+}
+for (let m = 0; m < 16; m++) add(`brick${m}`, brick(m));
+
 add("dock", (p) => {
   p.rect(0, 0, T, T, C.wood);
   for (let y = 0; y < T; y += 4) p.hline(0, y, T, C.woodShade);
@@ -197,6 +232,69 @@ add("fenceH", (p) => {
 });
 add("fenceV", (p) => {
   p.rect(6, 0, 3, T, C.wood).vline(5, 0, T, INK).vline(9, 0, T, INK);
+});
+// Paving details: small, irregular, never repeating in a visible grid (placed by hash in the map).
+add("crack", (p) => {
+  const c = mix(INK, C.stone, 0.55);
+  for (const [x, y] of [
+    [4, 5],
+    [5, 6],
+    [6, 6],
+    [7, 7],
+    [8, 8],
+    [8, 9],
+    [9, 10],
+    [7, 8],
+    [6, 9],
+  ])
+    p.set(x, y, c);
+});
+add("moss", (p) => {
+  for (const [x, y, c] of [
+    [3, 3, C.grassShade],
+    [4, 3, C.grass],
+    [3, 4, C.grass],
+    [12, 11, C.grassShade],
+    [11, 12, C.grass],
+    [12, 12, C.grass],
+    [13, 12, C.grassShade],
+    [7, 15, C.grassShade],
+    [8, 15, C.grass],
+  ] as [number, number, string][])
+    p.set(x, y, c);
+});
+add("leaves", (p) => {
+  for (const [x, y, c] of [
+    [3, 9, "#e8836b"],
+    [4, 9, "#c86650"],
+    [10, 4, "#d7b25a"],
+    [11, 4, "#b39a4a"],
+    [12, 12, "#e8836b"],
+  ] as [number, number, string][]) {
+    p.set(x, y, c);
+    p.set(x, y + 1, mix(c, INK, 0.25));
+  }
+});
+add("grate", (p) => {
+  const d = mix(INK, C.stone, 0.25);
+  p.rect(4, 5, 8, 6, d);
+  for (let x = 5; x < 12; x += 2) p.vline(x, 6, 4, C.stoneShade);
+  p.hline(4, 4, 8, C.stoneLight).vline(3, 5, 6, C.stoneLight);
+});
+add("puddle", (p) => {
+  p.ascii(2, 6, ["...bbbbbb...", ".bbbBBbbbbb.", "bbBBbbbbbbbb", ".bbbbbbbBbb.", "...bbbbb...."], {
+    b: mix(C.water, C.stone, 0.35),
+    B: C.waterLight,
+  });
+});
+add("petals", (p) => {
+  for (const [x, y, c] of [
+    [5, 4, C.flowerB],
+    [9, 7, C.flowerA],
+    [4, 11, C.flowerC],
+    [12, 10, C.flowerB],
+  ] as [number, number, string][])
+    p.set(x, y, c);
 });
 add("stepstone", (p) => {
   p.ascii(3, 4, ["..ooo..", ".ottto.", "otllsto", ".oooo.."], {

@@ -80,11 +80,40 @@ body {
   outline-offset: 2px;
 }
 
-/* Pixel face: names, nameplates, place titles (600) and buttons, prompts, labels (500). Never paragraphs. */
+/*
+ * Two faces, one rule. Pixel face = things you read as signs: names and titles (600), section headings,
+ * buttons, tabs, prompts and nameplates (500). Inter = everything you read as content, including the
+ * labels that name a field or a value. Both render with the same smoothing so the pixel face never looks
+ * like two different fonts.
+ */
 @utility font-pixel {
   font-family: var(--font-pixel);
   font-weight: 500;
-  -webkit-font-smoothing: none;
+}
+/* The one label style: names a field, a value or a row. Inter 600, 13 px, a touch of tracking. */
+@utility field-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+/* A key on the keyboard, drawn as a small keycap. */
+@utility keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding-inline: 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--paper-shade);
+  border: 2px solid var(--ink);
+  box-shadow: inset 0 -3px 0 rgb(43 27 51 / 0.18);
 }
 @utility font-name {
   font-family: var(--font-pixel);
@@ -103,9 +132,31 @@ body {
 @utility panel {
   border-style: solid;
   border-width: 4px;
-  border-image: url("/ui/frame-paper.png") 4 fill / 4px / 0 stretch;
+  border-image: url("/ui/frame-paper.png") 4 / 4px / 0 stretch;
+  /* paper with a faint grain, kept inside the stepped frame */
+  background: var(--paper) url("/ui/paper-grain.png") repeat;
+  background-clip: padding-box;
   image-rendering: pixelated;
   filter: drop-shadow(4px 4px 0 var(--ink-faint));
+}
+/* Sheets and dialogue boxes: the panel plus a printed inner rule, like good stationery. */
+@utility parchment {
+  box-shadow:
+    inset 0 0 0 5px var(--paper),
+    inset 0 0 0 7px var(--paper-shade);
+}
+/* The hanging sign a place's name is painted on: a plank in path-wood with a lit top edge. */
+@utility sign {
+  border-style: solid;
+  border-width: 4px;
+  border-image: url("/ui/frame-wood.png") 4 / 4px / 0 stretch;
+  background: var(--path);
+  background-clip: padding-box;
+  box-shadow:
+    inset 0 3px 0 rgb(255 255 255 / 0.3),
+    inset 0 -3px 0 rgb(43 27 51 / 0.16);
+  image-rendering: pixelated;
+  filter: drop-shadow(3px 3px 0 var(--ink-faint));
 }
 /* Cards exist only for clickable rows: same frame, no shadow until pointed at. */
 @utility card {
@@ -113,6 +164,49 @@ body {
   border-width: 4px;
   border-image: url("/ui/frame-paper.png") 4 fill / 4px / 0 stretch;
   image-rendering: pixelated;
+}
+/* An inset pane: the teller's window, a quote, a waypoint. Paper-shade frame, sunk 2 px. */
+@utility window {
+  border-style: solid;
+  border-width: 4px;
+  border-image: url("/ui/frame-paper-shade.png") 4 fill / 4px / 0 stretch;
+  image-rendering: pixelated;
+  box-shadow: inset 0 2px 0 rgb(43 27 51 / 0.1);
+}
+/* The tavern's chalkboard: slate in a wooden frame, chalk-white letters. */
+@utility chalkboard {
+  background: #3e3346;
+  color: #f3ead6;
+  border: 4px solid #8a5a3c;
+  outline: 2px solid var(--ink);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 0.18);
+}
+/* A speech bubble: a member's own line, with a pixel tail pointing up at their portrait. */
+@utility speech {
+  position: relative;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink-faint);
+  &::before {
+    content: "";
+    position: absolute;
+    left: 24px;
+    top: -10px;
+    width: 14px;
+    height: 10px;
+    background: var(--ink);
+    clip-path: polygon(0 100%, 50% 0, 100% 100%);
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    left: 27px;
+    top: -6px;
+    width: 8px;
+    height: 7px;
+    background: var(--paper);
+    clip-path: polygon(0 100%, 50% 0, 100% 100%);
+  }
 }
 @utility divider {
   border-top: 2px solid var(--paper-shade);
@@ -222,5 +316,25 @@ body {
     animation-duration: 1ms !important;
     /* biome-ignore lint/complexity/noImportantStyles: same */
     transition-duration: 1ms !important;
+  }
+}
+
+/* Three pixel dots stepping, for short waits. */
+@utility loading-dots {
+  display: inline-block;
+  width: 18px;
+  height: 4px;
+  background:
+    linear-gradient(var(--ink), var(--ink)) 0 0 / 4px 4px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 7px 0 / 4px 4px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 14px 0 / 4px 4px no-repeat;
+  animation: dots 900ms steps(3) infinite;
+}
+@keyframes dots {
+  0% {
+    clip-path: inset(0 14px 0 0);
+  }
+  100% {
+    clip-path: inset(0 -4px 0 0);
   }
 }

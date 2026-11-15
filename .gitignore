@@ -11,3 +11,5 @@ next-env.d.ts
 .vercel
 .DS_Store
 .playwright-mcp
+# local screenshots
+Screenshot *.png

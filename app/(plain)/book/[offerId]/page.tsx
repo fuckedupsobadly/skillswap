@@ -73,10 +73,22 @@ export default async function BookPage({
     .filter(Boolean)
     .join(" ");
   return (
-    <Page title={`Book ${first} · ${row.skill.name}`}>
+    <Page
+      title={`Book ${first} · ${row.skill.name}`}
+      size="narrow"
+      scene={{
+        hut: {
+          roof: card?.roof ?? "#b7a28c",
+          look: v.hut,
+          presence: card?.presence ?? "busy",
+          villager: v.look,
+          kitty: card?.kitty?.code ?? null,
+        },
+      }}
+    >
       {/* Portrait and nameplate, the same as the dialogue box (§6.3). */}
-      <div className="-mt-2 flex items-center gap-3">
-        <div className="bg-paper-shade">
+      <div className="flex items-center gap-3">
+        <div className="window shrink-0">
           <Portrait look={v.look} size={48} />
         </div>
         <div className="grid gap-0.5">

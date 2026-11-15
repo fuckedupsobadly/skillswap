@@ -127,7 +127,7 @@ export function kittyTexture(scene: Phaser.Scene, code: string) {
   return key;
 }
 
-export function critterTexture(scene: Phaser.Scene, kind: "chicken" | "duck" | "bird") {
+export function critterTexture(scene: Phaser.Scene, kind: "chicken" | "duck" | "bird" | "pigeon") {
   const key = `critter:${kind}`;
   if (scene.textures.exists(key)) return key;
   const a = critter(kind, 0);

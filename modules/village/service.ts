@@ -81,11 +81,14 @@ export async function ensureSampleVillagers(db: DB) {
   );
   for (const m of missing) await ensureVillager(db, m.id);
   const samples = rows<{ id: string; status: "free" | "busy" | "away" }>(
-    await db.execute(sql`select m.id, v.status from members m join villagers v on v.member_id = m.id where m.is_sample`),
+    await db.execute(
+      sql`select m.id, v.status from members m join villagers v on v.member_id = m.id where m.is_sample`,
+    ),
   );
   for (const m of samples) {
     const want = sampleStatus(m.id);
-    if (m.status !== want) await db.update(villagers).set({ status: want }).where(eq(villagers.memberId, m.id));
+    if (m.status !== want)
+      await db.update(villagers).set({ status: want }).where(eq(villagers.memberId, m.id));
   }
 }
 
@@ -295,6 +298,8 @@ export async function memberCard(q: Q, viewerId: string, handle: string, now = n
     backAt: live ? new Date(live.until).toISOString() : null,
     statusLine: v.statusLine,
     look: v.look,
+    hut: v.hut,
+    roof: teach[0] ? categoryColor(teach[0].category) : "#b7a28c",
     rating: bayesianRating(revs),
     reviews: revs.length,
     teaches: teach.map((s) => ({

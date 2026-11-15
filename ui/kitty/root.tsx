@@ -209,14 +209,14 @@ function Dock() {
           <div className="mt-4 flex items-center justify-between text-meta">
             <Link
               href="/kitty"
-              className="font-pixel underline underline-offset-2"
+              className="btn btn-tertiary -ml-2"
               onClick={() => kittyStore.set({ panelOpen: false })}
             >
               Wardrobe
             </Link>
             <button
               type="button"
-              className="text-ink-soft underline underline-offset-2"
+              className="btn btn-tertiary -mr-2 text-ink-soft"
               onClick={async () => {
                 await saveGameSettings({ showKitty: false });
                 window.location.reload();

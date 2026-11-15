@@ -7,7 +7,7 @@ import { formatDateTime } from "@/modules/booking/slots";
 import { progressFor } from "@/modules/game/service";
 import { OPEN_BOOKING_LIMIT, TRUST_NAMES } from "@/modules/trust/reputation";
 import { ensureVillager } from "@/modules/village/service";
-import { Mono, Page, Section } from "@/ui/bits";
+import { Columns, Mono, Page, Section, Stack } from "@/ui/bits";
 import { KittySettings } from "./kitty-settings";
 import { VillageSettings } from "./settings";
 
@@ -48,78 +48,99 @@ export default async function Hall() {
   const level = viewer.member.trustLevel;
   const tz = viewer.member.timezone;
   return (
-    <Page title="Town Hall" sub="Settings, your trust level, and the stewards' bench.">
-      <Section title="The village and you">
-        <VillageSettings plain={v.plainMode} hideMe={v.hideMe} />
-      </Section>
+    <Page
+      title="Town Hall"
+      sub="Settings, your trust level, and the stewards' bench."
+      scene={{ place: "hall" }}
+    >
+      <Columns>
+        <Stack>
+          <Section title="The village and you" icon="gear">
+            <VillageSettings plain={v.plainMode} hideMe={v.hideMe} />
+          </Section>
 
-      <Section title="Trust">
-        <p>
-          You're <span className="font-pixel text-label">{TRUST_NAMES[level]}</span>
-          <span className="text-ink-soft">
-            {" "}
-            · <span className="tnum">{stats?.settled ?? 0}</span> confirmed{" "}
-            {stats?.settled === 1 ? "session" : "sessions"}
-          </span>
-        </p>
-        <ol className="grid">
-          {LADDER.map((l, i) => (
-            <li
-              key={TRUST_NAMES[i]}
-              className="grid grid-cols-[88px_1fr] gap-3 border-t-2 border-paper-shade py-2.5 first:border-t-0"
-            >
-              <span className={`font-pixel text-label ${i > level ? "text-ink-soft" : ""}`}>
-                {TRUST_NAMES[i]}
-                {i === level ? <span className="sr-only"> (you)</span> : null}
+          <Section title="Kitty" icon="menu">
+            <KittySettings initial={game.settings} kittyName={game.kitty?.name ?? null} />
+          </Section>
+          <Section title="This device" icon="gear">
+            <div className="grid gap-2 text-ink-soft">
+              <p>
+                You're signed in with a key made in this browser. Its private half can't be exported, even by
+                SkillSwap; clearing this site's data removes it, and with it this guest account.
+              </p>
+              <span className="field-label">Key fingerprint</span>
+              <Mono>{viewer.signerKey}</Mono>
+            </div>
+          </Section>
+        </Stack>
+        <Stack>
+          <Section title="Trust" icon="sign">
+            <p>
+              You're <span className="font-semibold">{TRUST_NAMES[level]}</span>
+              <span className="text-ink-soft">
+                {" "}
+                · <span className="tnum">{stats?.settled ?? 0}</span> confirmed{" "}
+                {stats?.settled === 1 ? "session" : "sessions"}
               </span>
-              <span className={i > level ? "text-ink-soft" : ""}>
-                {l.unlocks}
-                <span className="block text-meta text-ink-soft">{i === 0 ? "From day one" : l.reach}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section title="Stewards' bench">
-        {disputes.length ? (
-          <ul className="grid">
-            {disputes.map((d) => (
-              <li key={d.id} className="border-t-2 border-paper-shade first:border-t-0">
-                <Link href={`/sessions/${d.id}`} className="group flex min-h-11 items-baseline gap-3 py-2.5">
-                  <span className="min-w-0 flex-1 group-hover:underline group-hover:underline-offset-4">
-                    {d.skill}
-                    {d.other ? ` with ${d.other.split(" ")[0]}` : ""}
+            </p>
+            <ol className="grid">
+              {LADDER.map((l, i) => (
+                <li key={TRUST_NAMES[i]} className="relative grid grid-cols-[20px_88px_1fr] gap-3 py-2.5">
+                  {/* the ladder: a rail, and a rung that is filled for the levels you've reached */}
+                  <span aria-hidden className="relative flex justify-center">
+                    {i < LADDER.length - 1 ? (
+                      <span className="absolute top-4 -bottom-6 w-0.5 bg-paper-shade" />
+                    ) : null}
+                    <span
+                      className={`relative mt-1 size-3 border-2 border-ink ${i <= level ? "bg-ink" : "bg-paper"}`}
+                    />
                   </span>
-                  <span className="tnum text-meta text-ink-soft">
-                    {formatDateTime(new Date(d.startsAt), tz)}
+                  <span className={`field-label pt-0.5 ${i > level ? "text-ink-soft" : ""}`}>
+                    {TRUST_NAMES[i]}
+                    {i === level ? (
+                      <span className="mt-1 block w-fit bg-paper-shade px-1.5 text-meta">You</span>
+                    ) : null}
                   </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-ink-soft">
-            No disputes. If a session goes wrong, open one from the Lantern Room before you confirm; the hours
-            stay held until stewards decide.
-          </p>
-        )}
-      </Section>
+                  <span className={i > level ? "text-ink-soft" : ""}>
+                    {l.unlocks}
+                    <span className="block text-meta text-ink-soft">
+                      {i === 0 ? "From day one" : l.reach}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </Section>
 
-      <Section title="Kitty">
-        <KittySettings initial={game.settings} kittyName={game.kitty?.name ?? null} />
-      </Section>
-
-      <Section title="This device">
-        <div className="grid gap-2 text-ink-soft">
-          <p>
-            You're signed in with a key made in this browser. Its private half can't be exported, even by
-            SkillSwap; clearing this site's data removes it, and with it this guest account.
-          </p>
-          <span className="font-pixel text-label text-ink">Key fingerprint</span>
-          <Mono>{viewer.signerKey}</Mono>
-        </div>
-      </Section>
+          <Section title="Stewards' bench" icon="book">
+            {disputes.length ? (
+              <ul className="grid">
+                {disputes.map((d) => (
+                  <li key={d.id} className="border-t-2 border-paper-shade first:border-t-0">
+                    <Link
+                      href={`/sessions/${d.id}`}
+                      className="group flex min-h-11 items-baseline gap-3 py-2.5"
+                    >
+                      <span className="min-w-0 flex-1 group-hover:underline group-hover:underline-offset-4">
+                        {d.skill}
+                        {d.other ? ` with ${d.other.split(" ")[0]}` : ""}
+                      </span>
+                      <span className="tnum text-meta text-ink-soft">
+                        {formatDateTime(new Date(d.startsAt), tz)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-ink-soft">
+                No disputes. If a session goes wrong, open one from the Lantern Room before you confirm; the
+                hours stay held until stewards decide.
+              </p>
+            )}
+          </Section>
+        </Stack>
+      </Columns>
     </Page>
   );
 }

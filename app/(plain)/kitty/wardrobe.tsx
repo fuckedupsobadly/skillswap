@@ -126,7 +126,7 @@ export function Wardrobe({
         }}
       >
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="font-pixel text-name">Wardrobe</h2>
+          <h2 className="font-name">Wardrobe</h2>
           <span className="text-meta text-ink-soft">Items are earned, never bought.</span>
         </div>
         <ul className="grid gap-3">

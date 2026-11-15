@@ -57,6 +57,7 @@ function Balance() {
       <button
         type="button"
         onClick={() => router.push("/bank")}
+        data-guide="balance"
         className="panel flex min-h-11 items-center gap-2 px-3"
         aria-label={`Balance ${formatHours(s.viewer.balanceMin)}, ${formatHours(s.viewer.heldMin)} held. Open the bank`}
       >
@@ -112,6 +113,7 @@ function MapMenu() {
     <div ref={ref} className="fixed top-4 right-4 z-40 flex items-start gap-2">
       <button
         type="button"
+        data-guide="map"
         className="btn btn-secondary"
         onClick={() => village.set({ overlay: "map" })}
         aria-keyshortcuts="M"
@@ -119,7 +121,8 @@ function MapMenu() {
         <PixelIcon name="map" size={16} />
         Map
       </button>
-      <div className="relative">
+      <FullscreenButton />
+      <div className="relative" data-guide="menu">
         <button
           type="button"
           className="btn btn-secondary px-3"
@@ -152,6 +155,14 @@ function MapMenu() {
               label="Plain mode"
             />
             <MenuItem onClick={() => go("/hall")} icon="gear" label="Settings" />
+            <MenuItem
+              onClick={() => {
+                setOpen(false);
+                village.set({ tour: true });
+              }}
+              icon="help"
+              label="Guide"
+            />
           </div>
         ) : null}
       </div>
@@ -182,6 +193,47 @@ function MenuItem({
       {count ? <span className="tnum font-sans text-meta">{count}</span> : null}
     </button>
   );
+}
+
+/**
+ * Full screen (F): the whole display for the village, no browser chrome. Esc or F again to leave.
+ * Hidden where the Fullscreen API isn't available (iOS Safari).
+ */
+function FullscreenButton() {
+  const [on, setOn] = useState(false);
+  const [can, setCan] = useState(false);
+  useEffect(() => {
+    setCan(Boolean(document.documentElement.requestFullscreen));
+    const sync = () => setOn(Boolean(document.fullscreenElement));
+    const key = (e: KeyboardEvent) => {
+      if ((e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey && !village.inputBlocked()) toggle();
+    };
+    document.addEventListener("fullscreenchange", sync);
+    window.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("fullscreenchange", sync);
+      window.removeEventListener("keydown", key);
+    };
+  }, []);
+  if (!can) return null;
+  return (
+    <button
+      type="button"
+      data-guide="fullscreen"
+      className="btn btn-secondary px-3"
+      aria-pressed={on}
+      aria-keyshortcuts="F"
+      aria-label={on ? "Leave full screen (F)" : "Full screen (F)"}
+      title={on ? "Leave full screen · F" : "Full screen · F"}
+      onClick={toggle}
+    >
+      <PixelIcon name={on ? "shrink" : "expand"} size={16} />
+    </button>
+  );
+}
+function toggle() {
+  if (document.fullscreenElement) void document.exitFullscreen();
+  else void document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
 }
 
 export function FadeOverlay() {

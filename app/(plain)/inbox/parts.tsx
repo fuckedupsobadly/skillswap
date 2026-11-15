@@ -52,7 +52,7 @@ export function NoteForm({
     >
       {compact ? null : (
         <div className="grid gap-1.5">
-          <label htmlFor={`${id}-to`} className="font-pixel text-label">
+          <label htmlFor={`${id}-to`} className="field-label">
             To
           </label>
           <input
@@ -66,7 +66,7 @@ export function NoteForm({
         </div>
       )}
       <div className="grid gap-1.5">
-        <label htmlFor={`${id}-body`} className={compact ? "sr-only" : "font-pixel text-label"}>
+        <label htmlFor={`${id}-body`} className={compact ? "sr-only" : "field-label"}>
           {compact ? `Reply to ${to0}` : "Note"}
         </label>
         <textarea

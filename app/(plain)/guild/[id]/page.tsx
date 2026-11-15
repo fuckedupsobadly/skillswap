@@ -7,8 +7,7 @@ import { categories } from "@/db/schema";
 import { boardRows } from "@/modules/village/board";
 import { guildById } from "@/modules/village/guilds";
 import { traces } from "@/modules/village/service";
-import { Empty, Page, Section } from "@/ui/bits";
-import { PixelIcon } from "@/ui/pixel/icons";
+import { Columns, Empty, Page, Section, Stack } from "@/ui/bits";
 import { BoardList } from "../../board/list";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -35,16 +34,8 @@ export default async function GuildHall({ params }: { params: Promise<{ id: stri
   const running = t.chimneys.includes(g.id);
   const free = offers.filter((o) => "presence" in o && o.presence === "free").length;
   return (
-    <Page
-      title={g.name}
-      sub={cats.map((c) => c.name).join(", ")}
-      action={
-        <span aria-hidden className="grid h-11 w-11 place-items-center" style={{ background: g.roof }}>
-          <PixelIcon name={g.icon} size={24} />
-        </span>
-      }
-    >
-      <p className="-mt-2 text-ink-soft">
+    <Page title={g.name} sub={cats.map((c) => c.name).join(", ")} scene={{ guild: g.id, running }}>
+      <p className="-mt-4 text-ink-soft">
         <span className="tnum">{offers.length}</span> {offers.length === 1 ? "teacher" : "teachers"} in this
         guild
         {free ? (
@@ -58,51 +49,56 @@ export default async function GuildHall({ params }: { params: Promise<{ id: stri
           : "The chimney is quiet: no lesson running."}
       </p>
 
-      <Section
-        title="Teaching here"
-        aside={
-          <Link href={`/board?guild=${g.id}`} className="btn btn-tertiary -my-2 -mr-2">
-            Filter the board
-          </Link>
-        }
-      >
-        {offers.length ? (
-          <BoardList list={offers} />
-        ) : (
-          <Empty
-            action={
-              <Link href="/hut#skills" className="btn btn-secondary">
-                Teach something here
-              </Link>
-            }
-          >
-            No one teaches in this guild yet. You could be the first.
-          </Empty>
-        )}
-      </Section>
+      <Columns>
+        <Section
+          title="Teaching here"
+          icon={g.icon}
+          aside={
+            <Link href={`/board?guild=${g.id}`} className="btn btn-tertiary -my-2 -mr-2">
+              Filter the board
+            </Link>
+          }
+        >
+          {offers.length ? (
+            <BoardList list={offers} />
+          ) : (
+            <Empty
+              action={
+                <Link href="/hut#skills" className="btn btn-secondary">
+                  Teach something here
+                </Link>
+              }
+            >
+              No one teaches in this guild yet. You could be the first.
+            </Empty>
+          )}
+        </Section>
 
-      <Section title="Wishes for this guild">
-        {requests.length ? (
-          <BoardList list={requests} />
-        ) : (
-          <Empty
-            action={
-              <Link href="/well" className="btn btn-secondary">
-                Make a wish
-              </Link>
-            }
-          >
-            No open wishes here right now.
-          </Empty>
-        )}
-      </Section>
+        <Stack>
+          <Section title="Wishes for this guild" icon="search">
+            {requests.length ? (
+              <BoardList list={requests} />
+            ) : (
+              <Empty
+                action={
+                  <Link href="/well" className="btn btn-secondary">
+                    Make a wish
+                  </Link>
+                }
+              >
+                No open wishes here right now.
+              </Empty>
+            )}
+          </Section>
 
-      <Section title="Group classes">
-        <p className="text-ink-soft">
-          No group classes are open in this guild. Proposals appear on the Tavern chalkboard first, then here
-          once enough people sign up.
-        </p>
-      </Section>
+          <Section title="Group classes" icon="book">
+            <p className="text-ink-soft">
+              No group classes are open in this guild. Proposals appear on the Tavern chalkboard first, then
+              here once enough people sign up.
+            </p>
+          </Section>
+        </Stack>
+      </Columns>
     </Page>
   );
 }

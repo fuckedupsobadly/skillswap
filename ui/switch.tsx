@@ -57,7 +57,7 @@ export function SwitchRow({
   return (
     <li className="flex items-center justify-between gap-4">
       <div className="grid gap-0.5">
-        <span id={id} className="font-pixel text-label">
+        <span id={id} className="font-semibold">
           {label}
         </span>
         <span className="text-meta text-ink-soft">{hint}</span>

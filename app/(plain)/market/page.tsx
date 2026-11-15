@@ -4,8 +4,7 @@ import { getViewer } from "@/app/_lib/viewer";
 import { getDb } from "@/db/client";
 import { boardRows } from "@/modules/village/board";
 import { MARKET } from "@/modules/village/guilds";
-import { Empty, Page, Section } from "@/ui/bits";
-import { PixelIcon } from "@/ui/pixel/icons";
+import { Columns, Empty, Page, Section, Stack } from "@/ui/bits";
 import { BoardList } from "../board/list";
 
 export const metadata = { title: "Market Row" };
@@ -23,46 +22,46 @@ export default async function Market() {
     <Page
       title="Market Row"
       sub="Career and business skills: CVs, interviews, pitching, spreadsheets for work."
-      action={
-        <span aria-hidden className="grid h-11 w-11 place-items-center" style={{ background: MARKET.roof }}>
-          <PixelIcon name={MARKET.icon} size={24} />
-        </span>
-      }
+      scene={{ place: "market" }}
     >
-      <Section title="At the stalls">
-        {offers.length ? (
-          <BoardList list={offers} />
-        ) : (
-          <Empty
-            action={
-              <Link href="/hut#skills" className="btn btn-secondary">
-                Open a stall
-              </Link>
-            }
-          >
-            No one is teaching career skills yet.
-          </Empty>
-        )}
-      </Section>
-      {requests.length ? (
-        <Section title="Wanted">
-          <BoardList list={requests} />
+      <Columns>
+        <Section title="At the stalls" icon="sign">
+          {offers.length ? (
+            <BoardList list={offers} />
+          ) : (
+            <Empty
+              action={
+                <Link href="/hut#skills" className="btn btn-secondary">
+                  Open a stall
+                </Link>
+              }
+            >
+              No one is teaching career skills yet.
+            </Empty>
+          )}
         </Section>
-      ) : null}
-      <Section title="The Plus booth">
-        <div className="grid gap-2">
-          <p>
-            Plus is an optional subscription that keeps the village running: more time with the Barkeep,
-            earlier swap matches and bigger group classes.
-          </p>
-          <p className="font-medium">
-            It sells no hours and no XP. One hour is always one hour, for everyone.
-          </p>
-          <p className="text-meta text-ink-soft">
-            The booth is closed in this demo. Nothing here takes payment.
-          </p>
-        </div>
-      </Section>
+        <Stack>
+          {requests.length ? (
+            <Section title="Wanted" icon="search">
+              <BoardList list={requests} />
+            </Section>
+          ) : null}
+          <Section title="The Plus booth" icon="hourglass">
+            <div className="window grid gap-2 px-4 py-3">
+              <p>
+                Plus is an optional subscription that keeps the village running: more time with the Barkeep,
+                earlier swap matches and bigger group classes.
+              </p>
+              <p className="font-medium">
+                It sells no hours and no XP. One hour is always one hour, for everyone.
+              </p>
+              <p className="text-meta text-ink-soft">
+                The booth is closed in this demo. Nothing here takes payment.
+              </p>
+            </div>
+          </Section>
+        </Stack>
+      </Columns>
     </Page>
   );
 }

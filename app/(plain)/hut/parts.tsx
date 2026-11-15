@@ -81,7 +81,7 @@ export function LanternForm({ status: s0, statusLine: l0 }: { status: Status; st
           save(status);
         }}
       >
-        <label htmlFor="status-line" className="font-pixel text-label">
+        <label htmlFor="status-line" className="field-label">
           Your line
         </label>
         <div className="flex gap-2">
@@ -212,7 +212,7 @@ export function HutLookForm({
       >
         <Picker label="Roof" names={ROOFS} value={look.roof} onStep={(d) => cyc("roof", ROOFS.length, d)} />
         <div className="grid grid-cols-[64px_1fr] items-center gap-2">
-          <span aria-hidden className="font-pixel text-label">
+          <span aria-hidden className="field-label">
             Door
           </span>
           <ChoiceRow
@@ -260,7 +260,7 @@ function Picker({
 }) {
   return (
     <div className="grid grid-cols-[64px_1fr] items-center gap-2">
-      <span className="font-pixel text-label">{label}</span>
+      <span className="field-label">{label}</span>
       <div className="flex items-center gap-1">
         <button
           type="button"

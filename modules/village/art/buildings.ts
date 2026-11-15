@@ -482,7 +482,12 @@ export function prop(
     | "mapStand"
     | "signpost"
     | "donationLantern"
-    | "chalk",
+    | "chalk"
+    | "lamp"
+    | "planter"
+    | "planterTree"
+    | "flowerCart"
+    | "crates",
 ) {
   const pal = {
     o: INK,
@@ -500,8 +505,91 @@ export function prop(
     p: "#e9a0a0",
     y: "#d7b25a",
     t: "#7c6a8f",
+    // square furniture: iron, pale lamp glass (never lantern gold: that means "a teacher is free"), terracotta
+    i: "#4a3d55",
+    L: "#fff4d6",
+    c: "#b49ad8",
+    f: "#f7f1f7",
+    B: "#c98b6b",
   };
   const art: Record<string, string[]> = {
+    lamp: [
+      "...ooo...",
+      "..oiiio..",
+      ".oiiiiio.",
+      "oiiiiiiio",
+      ".oLLwLLo.",
+      ".oLwLLLo.",
+      ".oLLLLLo.",
+      ".oLLLLLo.",
+      "oiiiiiiio",
+      ".ooiiioo.",
+      "...oio...",
+      "...oio...",
+      "...oio...",
+      "...oio...",
+      "...oio...",
+      "...oio...",
+      "...oio...",
+      "...oio...",
+      "..oiiio..",
+      "..oiiio..",
+      ".oiiiiio.",
+      ".ooooooo.",
+    ],
+    planter: [
+      "...r..c...f...",
+      "..rgr.cgc.gfg.",
+      ".gggggggggggg.",
+      "oooooooooooooo",
+      "osssssssssssSo",
+      "oSssssssssssSo",
+      "oSSSSSSSSSSSSo",
+      "oooooooooooooo",
+    ],
+    planterTree: [
+      "...oooooo...",
+      "..ollggggo..",
+      ".olgggggGGo.",
+      "olgggggggGGo",
+      "oggggggggGGo",
+      "oggggggggGGo",
+      ".oggggggGGo.",
+      "..oGGGGGGo..",
+      "...oooooo...",
+      ".....oNo....",
+      ".....oNo....",
+      "..oooooooo..",
+      "..oBBBBBBo..",
+      "..oBBBBBBo..",
+      "...oBBBBo...",
+      "...oooooo...",
+    ],
+    flowerCart: [
+      "...r.c.f..r.c.f...",
+      "..rgrcgcfgrgrcgcf.",
+      "..ogggggggggggggo.",
+      "..onnnnnnnnnnnnno.",
+      "oooNNNNNNNNNNNNNo.",
+      "..onnnnnnnnnnnnno.",
+      "..ooooooooooooooo.",
+      "....ooo.....ooo...",
+      "...oNNNo...oNNNo..",
+      "....ooo.....ooo...",
+    ],
+    crates: [
+      "..oooooooo..",
+      "..onnnnnno..",
+      "..onNooNno..",
+      "..onoNNono..",
+      "..onnnnnno..",
+      "oooooooooooo",
+      "onnnnnonnnno",
+      "onNooNonNoNo",
+      "ononNNonoNno",
+      "onnnnnonnnno",
+      "oooooooooooo",
+    ],
     tree: [
       "......oooooo......",
       "....oollggggoo....",

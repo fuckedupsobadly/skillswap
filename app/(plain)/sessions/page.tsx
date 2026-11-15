@@ -6,7 +6,7 @@ import { OPEN } from "@/modules/booking/machine";
 import { sessionsFor } from "@/modules/booking/service";
 import { formatDateTime } from "@/modules/booking/slots";
 import { formatMinutes } from "@/modules/platform/format";
-import { Empty, Page, Section } from "@/ui/bits";
+import { Columns, Empty, Page, Section } from "@/ui/bits";
 import { STATUS_TEXT } from "./status";
 
 export const metadata = { title: "Lantern Rooms" };
@@ -43,27 +43,30 @@ export default async function Sessions() {
     <Page
       title="Lantern Rooms"
       sub="Video happens only here, after a booking. No one is ever put on camera by walking past."
+      scene={{ place: "lanterns", live: upcoming.filter((s) => s.status === "live").length }}
     >
-      <Section title="Coming up">
-        {upcoming.length ? (
-          <ul className="grid gap-2">{upcoming.map(row)}</ul>
-        ) : (
-          <Empty
-            action={
-              <Link href="/board" className="btn btn-secondary">
-                Find a teacher
-              </Link>
-            }
-          >
-            Nothing booked. Find a lit lantern on the Notice Board, or make a wish.
-          </Empty>
-        )}
-      </Section>
-      {past.length ? (
-        <Section title="Earlier">
-          <ul className="grid gap-2">{past.map(row)}</ul>
+      <Columns>
+        <Section title="Coming up" icon="lantern">
+          {upcoming.length ? (
+            <ul className="grid gap-2">{upcoming.map(row)}</ul>
+          ) : (
+            <Empty
+              action={
+                <Link href="/board" className="btn btn-secondary">
+                  Find a teacher
+                </Link>
+              }
+            >
+              Nothing booked. Find a lit lantern on the Notice Board, or make a wish.
+            </Empty>
+          )}
         </Section>
-      ) : null}
+        {past.length ? (
+          <Section title="Earlier" icon="book">
+            <ul className="grid gap-2">{past.map(row)}</ul>
+          </Section>
+        ) : null}
+      </Columns>
     </Page>
   );
 }

@@ -13,10 +13,7 @@ export default async function VillagerPage() {
   const v = await ensureVillager(await getDb(), viewer.memberId);
   const onboarding = v.onboardingStep <= 3;
   return (
-    <Page
-      title="Make your villager"
-      action={onboarding ? <span className="font-pixel text-label text-ink-soft">Step 2/7</span> : undefined}
-    >
+    <Page title="Make your villager" scene={{ place: "gate" }} size="narrow">
       <Creator initial={v.look} name={viewer.member.displayName} onboarding={onboarding} />
     </Page>
   );

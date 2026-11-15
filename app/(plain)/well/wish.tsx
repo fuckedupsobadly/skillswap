@@ -5,6 +5,7 @@ import { parseText, postRequest } from "@/app/actions/market";
 import { setOnboardingStep } from "@/app/actions/village";
 import type { ParsedRequest } from "@/modules/ai/concierge";
 import { formatMinutes, levelName } from "@/modules/platform/format";
+import { well } from "@/modules/village/art/buildings";
 import { FormError } from "@/ui/field";
 import { ShowOnMap } from "@/ui/show-on-map";
 import { useToWorld } from "@/ui/to-world";
@@ -127,7 +128,7 @@ export function WishForm({
     >
       {first ? <Dots step={5} /> : null}
       <div className="grid gap-1.5">
-        <label htmlFor="wish" className="font-pixel text-label">
+        <label htmlFor="wish" className="field-label">
           I want to learn
         </label>
         <input
@@ -142,7 +143,7 @@ export function WishForm({
       </div>
       <fieldset className="grid grid-cols-[72px_1fr] items-center gap-x-3 gap-y-3">
         <legend className="sr-only">Details</legend>
-        <span className="font-pixel text-label">Level</span>
+        <span className="field-label">Level</span>
         <div className="flex flex-wrap gap-x-4 gap-y-1" role="radiogroup" aria-label="Level">
           {LEVELS.map((l) => (
             <label key={l.v} className="flex min-h-11 items-center gap-2">
@@ -157,7 +158,7 @@ export function WishForm({
             </label>
           ))}
         </div>
-        <span className="font-pixel text-label">How</span>
+        <span className="field-label">How</span>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {(
             [
@@ -177,7 +178,7 @@ export function WishForm({
             </label>
           ))}
         </div>
-        <span className="font-pixel text-label">When</span>
+        <span className="field-label">When</span>
         <div className="flex flex-wrap items-center gap-3">
           <span>{when}</span>
           <Link href="/hut#availability" className="btn btn-tertiary">
@@ -221,23 +222,61 @@ export function WishForm({
 }
 
 /** The coin, 6 frames, once (§8.1). */
+/**
+ * The coin (§8.1): the real Well, drawn by the same art as the world. A coin drops in over six frames,
+ * splashes, and the water glints. Plays once; reduced motion shows the glint straight away.
+ */
 function Coin() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const ctx = c.getContext("2d")!;
+    const toCanvas = (p: ReturnType<typeof well>) => {
+      const k = document.createElement("canvas");
+      k.width = p.w;
+      k.height = p.h;
+      k.getContext("2d")!.putImageData(new ImageData(new Uint8ClampedArray(p.data), p.w, p.h), 0, 0);
+      return k;
+    };
+    const still = toCanvas(well(3, false));
+    const glint = toCanvas(well(4, true));
+    const frame = (f: number) => {
+      ctx.clearRect(0, 0, 48, 64);
+      ctx.drawImage(f >= 8 ? glint : still, 0, 16);
+      if (f < 6) {
+        // the coin, falling into the basin
+        const y = 2 + f * 7;
+        ctx.fillStyle = "#2b1b33";
+        ctx.fillRect(22, y - 1, 4, 5);
+        ctx.fillStyle = "#e3c26b";
+        ctx.fillRect(23, y, 2, 3);
+      } else if (f < 8) {
+        // a splash ring on the water
+        ctx.fillStyle = "#e9f4fb";
+        const r = f === 6 ? 3 : 6;
+        ctx.fillRect(24 - r, 54, r * 2, 1);
+        ctx.fillRect(24 - r + 1, 56, r * 2 - 2, 1);
+      }
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return frame(8);
+    let f = 0;
+    frame(0);
+    const t = window.setInterval(() => {
+      f++;
+      frame(f);
+      if (f >= 8) clearInterval(t);
+    }, 100);
+    return () => clearInterval(t);
+  }, []);
   return (
-    <div aria-hidden className="relative h-24 w-24 overflow-hidden">
-      <svg
-        viewBox="0 0 24 24"
-        width="96"
-        height="96"
-        shapeRendering="crispEdges"
-        className="absolute inset-0"
-      >
-        <rect x="4" y="18" width="16" height="4" fill="#b7b2c2" />
-        <rect x="6" y="19" width="12" height="2" fill="#86bedf" />
-        <rect x="3" y="18" width="1" height="4" fill="#2b1b33" />
-        <rect x="20" y="18" width="1" height="4" fill="#2b1b33" />
-      </svg>
-      <span className="coin absolute left-[44px] h-2 w-2 bg-[#e3c26b] outline outline-1 outline-ink" />
-      <style>{`.coin{top:0;animation:coin 600ms steps(6) 1 both}@keyframes coin{to{top:76px}}@media (prefers-reduced-motion:reduce){.coin{top:76px;animation:none}}`}</style>
-    </div>
+    <canvas
+      ref={ref}
+      width={48}
+      height={64}
+      aria-hidden
+      className="window"
+      style={{ width: 96, height: 128, imageRendering: "pixelated", background: "var(--stone)" }}
+    />
   );
 }

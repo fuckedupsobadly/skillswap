@@ -1,8 +1,9 @@
 import * as Phaser from "phaser";
 import type { VillagerLook } from "@/db/schema";
 import * as B from "@/modules/village/art/buildings";
-import { lookFromSeed } from "@/modules/village/art/people";
+import { BARKEEP_LOOK, lookFromSeed } from "@/modules/village/art/people";
 import { Px } from "@/modules/village/art/pixels";
+import { bunting, plazaMosaic } from "@/modules/village/art/plaza";
 import {
   BARKEEP,
   CHALK,
@@ -20,7 +21,18 @@ import { gid } from "@/modules/village/art/tiles";
 import { astar, nearestFree, type Pt } from "@/modules/village/astar";
 import { GUILDS } from "@/modules/village/guilds";
 import type { HubEvent, PublicPlayer } from "@/modules/village/hub";
-import { MAP_H, MAP_W, PLACES, PLOTS, type Place, PROPS, SPAWN } from "@/modules/village/map";
+import {
+  BUNTING,
+  LAMPS,
+  MAP_H,
+  MAP_W,
+  PLACES,
+  PLAZA,
+  PLOTS,
+  type Place,
+  PROPS,
+  SPAWN,
+} from "@/modules/village/map";
 import type { HutView } from "@/modules/village/service";
 import { type Interact, type Prompt, type VillageState, village } from "./store";
 import { addPx, critterTexture, kittyTexture, placeTexture, villagerTexture } from "./textures";
@@ -35,20 +47,6 @@ type Options = { navigate: (route: string) => void; reduced: boolean; lowEnd: bo
 const TS = 16;
 const WALK = 4; // tiles per second
 const RUN = 6;
-const BARKEEP_LOOK: VillagerLook = {
-  body: 2,
-  skin: 3,
-  hair: 0,
-  hairColor: 1,
-  eyes: 3,
-  brows: 3,
-  top: 9,
-  topColor: 6,
-  bottom: 0,
-  bottomColor: 7,
-  shoes: 3,
-  accessory: "none",
-};
 
 const feet = (t: Pt) => ({ x: t.x * TS + 8, y: t.y * TS + 15 });
 const dirOf = (dx: number, dy: number): Dir =>
@@ -92,6 +90,36 @@ class Walker {
     this.texKey = villagerTexture(this.scene, look);
     this.sprite.setTexture(this.texKey, `${viewOf(this.dir)}:idle:0`);
   }
+}
+
+/**
+ * Fill the window at a whole-pixel zoom (§10.4: integer scale only).
+ *  · The village is a big map you scroll around: zoom up until it covers the window (cap 6).
+ *  · A room (the tavern) should be seen whole: take the largest zoom that crops at most `maxCrop` of the room
+ *    on either axis, centre it, and let the scene's own surround fill any band that's left. (Covering at any
+ *    cost cut the Barkeep and the bar off the top of a 1440 × 900 screen; not covering left two-thirds of it
+ *    bare, pinned to a corner.)
+ */
+function fitCamera(scene: Phaser.Scene, worldW: number, worldH: number, base: number, maxCrop = 1) {
+  const cam = scene.cameras.main;
+  const W = scene.scale.width;
+  const H = scene.scale.height;
+  const cover = Math.min(6, Math.ceil(Math.max(W / worldW, H / worldH) - 1e-6));
+  const contain = Math.max(1, Math.floor(Math.min(W / worldW, H / worldH)));
+  let z = contain;
+  for (let k = cover; k >= contain; k--) {
+    const cropX = Math.max(0, worldW * k - W) / (worldW * k);
+    const cropY = Math.max(0, worldH * k - H) / (worldH * k);
+    if (cropX <= maxCrop && cropY <= maxCrop) {
+      z = k;
+      break;
+    }
+  }
+  z = Math.max(base, z);
+  cam.setZoom(z);
+  const padX = Math.max(0, (W / z - worldW) / 2);
+  const padY = Math.max(0, (H / z - worldH) / 2);
+  cam.setBounds(-padX, -padY, worldW + padX * 2, worldH + padY * 2);
 }
 
 /** A scene that is still running: false once the game is destroyed, when isActive() itself would throw. */
@@ -172,6 +200,20 @@ export class VillageScene extends Phaser.Scene {
     const col = map.getLayer("collision")!;
     this.blocked = col.data.map((row) => row.map((t) => t.index > 0));
 
+    // The mosaic plaza the Well stands on, above the paving and below everything that stands on it.
+    addPx(this, "plaza", plazaMosaic());
+    this.add.image(PLAZA.x * TS, PLAZA.y * TS, "plaza").setDepth(-9.5);
+    // Bunting strung between lamp posts, overhead.
+    for (const [i, j] of BUNTING) {
+      const [ax, ay] = LAMPS[i];
+      const [bx] = LAMPS[j];
+      const k = addPx(this, `bunting:${i}`, bunting((bx - ax) * TS));
+      this.add
+        .image(ax * TS + 8, ay * TS - 4, k)
+        .setOrigin(0, 0)
+        .setDepth(8900);
+    }
+
     // Places: buildings and objects, y-sorted by their bottom edge.
     for (const p of PLACES) {
       if (p.kind === "area") continue;
@@ -235,8 +277,13 @@ export class VillageScene extends Phaser.Scene {
 
     // Camera: whole-pixel zoom, follows with a 120 ms ease (instant with reduced motion).
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, MAP_W * TS, MAP_H * TS);
-    cam.setZoom(this.opts.zoom);
+    const fitView = () => fitCamera(this, MAP_W * TS, MAP_H * TS, this.opts.zoom);
+    fitView();
+    this.scale.on(Phaser.Scale.Events.RESIZE, fitView);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      this.scale.off(Phaser.Scale.Events.RESIZE, fitView),
+    );
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.scale.off(Phaser.Scale.Events.RESIZE, fitView));
     cam.setRoundPixels(true);
     const lerp = this.opts.reduced ? 1 : 0.18;
     cam.startFollow(this.player.sprite, true, lerp, lerp, 0, 16);
@@ -260,6 +307,14 @@ export class VillageScene extends Phaser.Scene {
     this.updateNight();
 
     this.unsub = village.onCommand((c) => this.onCommand(c));
+    // The guide's waypoint lives in the store; redraw the arrow and footprints when it changes.
+    this.unsubStore = village.subscribe(() => {
+      const w = village.get().waypoint;
+      if (w?.x !== this.waypoint?.x || w?.y !== this.waypoint?.y) {
+        this.waypoint = w;
+        this.drawWaypoint();
+      }
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.teardown());
     // game.destroy() (leaving the page) fires DESTROY, not SHUTDOWN: drop the listener either way.
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.teardown());
@@ -267,6 +322,8 @@ export class VillageScene extends Phaser.Scene {
     const s = village.get().state;
     if (s) this.applyState(s);
     this.connect();
+    this.waypoint = village.get().waypoint;
+    this.drawWaypoint();
     village.set({ ready: true, scene: "village" });
   }
 
@@ -275,15 +332,17 @@ export class VillageScene extends Phaser.Scene {
   teardown() {
     this.unsub();
     this.unsub = () => {};
+    this.unsubStore();
+    this.unsubStore = () => {};
     this.es?.close();
     this.es = null;
     this.flushWalks();
   }
 
-  addPlate(x: number, y: number, text: string, pixel = true, small = false) {
+  addPlate(x: number, y: number, text: string, _pixel = true, small = false) {
     const t = this.add
       .text(x, y, text, {
-        fontFamily: pixel ? this.pixelFont : this.bodyFont,
+        fontFamily: this.pixelFont, // every nameplate and sign in the pixel face; only speech is Inter
         fontSize: small ? "6px" : "7px",
         color: "#2b1b33",
         backgroundColor: "#fbf6ecdd",
@@ -331,8 +390,9 @@ export class VillageScene extends Phaser.Scene {
         );
       }
     }
-    // tavern windows always glow at night
+    // tavern windows always glow at night, and so do the square's lamp posts
     this.glowSpots.push({ x: 20 * TS + 48, y: 27 * TS + 44, r: 30 });
+    for (const [lx, ly] of LAMPS) this.glowSpots.push({ x: lx * TS + 8, y: ly * TS, r: 24 });
     // worn paths
     const worn =
       (this.children.list.find(
@@ -875,6 +935,45 @@ export class VillageScene extends Phaser.Scene {
   // ── Scenery life: non-human, no nameplates, never clickable ──────────────
 
   critters: { s: Phaser.GameObjects.Sprite; home: Pt; r: number; t: number; water?: boolean }[] = [];
+  pigeons: { s: Phaser.GameObjects.Sprite; home: Pt; away: boolean }[] = [];
+
+  /** Pigeons scatter from a walker within ~2 tiles and settle back a few seconds later. */
+  updatePigeons() {
+    if (this.opts.reduced) return;
+    const me = this.player.sprite;
+    for (const pg of this.pigeons) {
+      if (pg.away) continue;
+      if (Math.hypot(me.x - pg.home.x, me.y - pg.home.y) > 30) continue;
+      pg.away = true;
+      const dir = pg.home.x >= me.x ? 1 : -1;
+      pg.s.setFlipX(dir < 0);
+      this.tweens.add({
+        targets: pg.s,
+        x: pg.home.x + dir * (50 + Math.random() * 40),
+        y: pg.home.y - 70 - Math.random() * 30,
+        alpha: 0,
+        duration: 650,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+          this.time.delayedCall(4000 + Math.random() * 4000, () => {
+            if (!sceneAlive(this)) return;
+            pg.s.setPosition(pg.home.x + dir * 40, pg.home.y - 40);
+            this.tweens.add({
+              targets: pg.s,
+              x: pg.home.x,
+              y: pg.home.y,
+              alpha: 1,
+              duration: 900,
+              ease: "Quad.easeIn",
+              onComplete: () => {
+                pg.away = false;
+              },
+            });
+          });
+        },
+      });
+    }
+  }
   setupCritters() {
     if (this.opts.lowEnd) return;
     const add = (kind: "chicken" | "duck", x: number, y: number, r: number, water = false) => {
@@ -892,6 +991,25 @@ export class VillageScene extends Phaser.Scene {
     add("duck", 8, 39.5, 26, true);
     add("duck", 11, 40.5, 26, true);
     add("duck", 6, 41, 18, true);
+    // pigeons on the square: they peck about and scatter when you walk through, then drift back
+    const pk = critterTexture(this, "pigeon");
+    for (const [x, y] of [
+      [33.3, 19.7],
+      [34.1, 20.1],
+      [33.7, 20.6],
+      [28.6, 25.4],
+      [29.5, 25.9],
+      [37.6, 24.6],
+    ]) {
+      const s = this.add
+        .sprite(x * TS, y * TS, pk, "0")
+        .setOrigin(0.5, 1)
+        .setDepth(y * TS)
+        .setFlipX(x > 31);
+      s.play({ key: `${pk}|go`, delay: Math.random() * 900 });
+      s.anims.timeScale = 0.6 + Math.random() * 0.6;
+      this.pigeons.push({ s, home: { x: x * TS, y: y * TS }, away: false });
+    }
     // the market cat
     const mk = kittyTexture(this, "v1.c01.p1.l2.w0.e1.r0.t1.b1.s1");
     this.add
@@ -1022,6 +1140,8 @@ export class VillageScene extends Phaser.Scene {
     }
 
     this.updateKitty(dt);
+    this.updatePigeons();
+    this.syncGuideAnchor();
     for (const c of this.critters) {
       c.t += dt;
       if (this.opts.reduced) continue;
@@ -1042,11 +1162,170 @@ export class VillageScene extends Phaser.Scene {
     this.arrived();
   }
 
+  // ── The guide: an arrow over the goal and footprints along the way ─────────
+
+  guideAnchor: HTMLElement | null | undefined;
+  /**
+   * The tour's "This is you" spotlight follows your villager on screen. The camera can't keep you centred
+   * at the map's edges (you arrive at the Gate, on the bottom edge), so the engine places the anchor itself.
+   */
+  syncGuideAnchor() {
+    if (this.guideAnchor === undefined)
+      this.guideAnchor = document.querySelector<HTMLElement>("[data-guide=player]");
+    const el = this.guideAnchor;
+    if (!el) return;
+    const cam = this.cameras.main;
+    const s = this.player.sprite;
+    const x = (s.x - cam.worldView.x) * cam.zoom + cam.x;
+    const y = (s.y - cam.worldView.y) * cam.zoom + cam.y;
+    el.style.transform = `translate(${Math.round(x - 32)}px, ${Math.round(y - 100)}px)`;
+    this.syncOffscreen();
+  }
+
+  offscreen: HTMLElement | null | undefined;
+  /** When the guide's goal is off screen, a pill at the edge points the way, with the place's name. */
+  syncOffscreen() {
+    if (this.offscreen === undefined)
+      this.offscreen = document.querySelector<HTMLElement>("[data-guide=offscreen]");
+    const el = this.offscreen;
+    if (!el) return;
+    const w = this.waypoint;
+    const cam = this.cameras.main;
+    if (!w) {
+      if (!el.hidden) el.hidden = true;
+      return;
+    }
+    const tx = (w.x * TS + 8 - cam.worldView.x) * cam.zoom + cam.x;
+    const ty = (w.y * TS + 8 - cam.worldView.y) * cam.zoom + cam.y;
+    const W = cam.width;
+    const H = cam.height;
+    const M = 40;
+    const inside = tx > M && tx < W - M && ty > M && ty < H - M;
+    if (inside) {
+      if (!el.hidden) el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+    const label = el.querySelector<HTMLElement>("[data-label]");
+    if (label && label.textContent !== w.label) label.textContent = w.label;
+    // clamp the pill to the screen edge along the line from the centre to the goal
+    const cx = W / 2;
+    const cy = H / 2;
+    const ang = Math.atan2(ty - cy, tx - cx);
+    const pad = 96;
+    const sx = Math.max(pad, Math.min(W - pad, cx + Math.cos(ang) * W));
+    const sy = Math.max(pad - 24, Math.min(H - pad, cy + Math.sin(ang) * H));
+    el.style.transform = `translate(${Math.round(sx)}px, ${Math.round(sy)}px) translate(-50%, -50%)`;
+    const arrow = el.querySelector<HTMLElement>("[data-arrow]");
+    if (arrow) arrow.style.transform = `rotate(${Math.round((ang * 180) / Math.PI / 45) * 45}deg)`;
+  }
+
+  unsubStore: () => void = () => {};
+  waypoint: { x: number; y: number; label: string } | null = null;
+  wpTrail: Phaser.GameObjects.Graphics | null = null;
+  wpRing: Phaser.GameObjects.Graphics | null = null;
+  wpArrow: Phaser.GameObjects.Image | null = null;
+
+  drawWaypoint() {
+    if (!sceneAlive(this)) return;
+    this.wpTrail ??= this.add.graphics().setDepth(-7);
+    this.wpRing ??= this.add.graphics().setDepth(-6.5);
+    if (!this.wpArrow) {
+      if (!this.textures.exists("guide:arrow")) {
+        const a = new Px(11, 13);
+        a.ascii(
+          0,
+          0,
+          [
+            "...ooooo...",
+            "...owwwo...",
+            "...owwwo...",
+            "...owwwo...",
+            "...owwwo...",
+            "ooooowooooo",
+            ".owwwwwwwo.",
+            "..owwwwwo..",
+            "...owwwo...",
+            "....owo....",
+            ".....o.....",
+          ],
+          {
+            o: "#2b1b33",
+            w: "#fbf6ec",
+          },
+        );
+        addPx(this, "guide:arrow", a);
+      }
+      this.wpArrow = this.add.image(0, 0, "guide:arrow").setOrigin(0.5, 1).setDepth(9100).setVisible(false);
+      if (!this.opts.reduced)
+        this.tweens.add({
+          targets: this.wpArrow,
+          y: "-=5",
+          duration: 520,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+    }
+    const trail = this.wpTrail;
+    const ring = this.wpRing;
+    trail.clear();
+    ring.clear();
+    const w = this.waypoint;
+    if (!w) {
+      this.wpArrow.setVisible(false);
+      return;
+    }
+    const gx = w.x * TS + 8;
+    const gy = w.y * TS + 8;
+    this.tweens.killTweensOf(this.wpArrow);
+    this.wpArrow.setVisible(true).setPosition(gx, gy - 18);
+    if (!this.opts.reduced)
+      this.tweens.add({
+        targets: this.wpArrow,
+        y: gy - 23,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    // a ring on the ground where you're going
+    ring.lineStyle(2, 0x2b1b33, 0.55).strokeEllipse(gx, gy + 4, 22, 10);
+    ring.lineStyle(1, 0xfbf6ec, 0.9).strokeEllipse(gx, gy + 4, 18, 7);
+    const t = this.player.tile;
+    if (Math.abs(t.x - w.x) + Math.abs(t.y - w.y) <= 1) return;
+    const path = astar((x, y) => this.isBlocked(x, y), MAP_W, MAP_H, t, { x: w.x, y: w.y });
+    if (!path) return;
+    // Footprints along the real walking route: a left and a right print per tile, turned with the path,
+    // dark on light ground with a paper glint, fading gently with distance.
+    path.forEach((pt, i) => {
+      if (i === path.length - 1) return;
+      const next = path[i + 1] ?? pt;
+      const dx = next.x - pt.x;
+      const dy = next.y - pt.y;
+      const a = Math.max(0.35, 0.85 - i * 0.015);
+      const cx = pt.x * TS + 8;
+      const cy = pt.y * TS + 9;
+      for (const side of [-1, 1]) {
+        // feet sit either side of the direction of travel, one a little ahead of the other
+        const ox = dy !== 0 ? side * 3 : (side > 0 ? 2 : -2) * Math.sign(dx || 1);
+        const oy = dx !== 0 ? side * 2.5 : (side > 0 ? 2 : -2) * Math.sign(dy || 1);
+        const w = dx !== 0 ? 4 : 3;
+        const h = dx !== 0 ? 3 : 4;
+        const x = Math.round(cx + ox - w / 2);
+        const y = Math.round(cy + oy - h / 2);
+        trail.fillStyle(0x2b1b33, a * 0.62).fillRect(x, y, w, h);
+        trail.fillStyle(0xfbf6ec, a * 0.9).fillRect(x + 1, y + 1, 1, 1);
+      }
+    });
+  }
+
   /** Standing on a new tile, by walking or by quick-travel. */
   arrived() {
     const t = this.player.tile;
     this.sendMove();
     this.updatePrompt();
+    if (this.waypoint) this.drawWaypoint();
     // Onboarding step 4: reach the Well — walking or by map, either counts (walking is never a tax).
     if (
       !this.reachedWell &&
@@ -1144,6 +1423,36 @@ export class TavernScene extends Phaser.Scene {
     this.pixelFont = css.getPropertyValue("--font-pixelify").trim() || "monospace";
     this.bodyFont = css.getPropertyValue("--font-inter").trim() || "sans-serif";
     this.cameras.main.setBackgroundColor("#2b1b33");
+    // The tavern's thick outer walls run off every edge of the screen, darkening away from the room, so a
+    // window wider than the room shows the building, not an empty band.
+    if (!this.textures.exists("tavern:outer")) {
+      const w = new Px(16, 16);
+      w.rect(0, 0, 16, 16, "#4a3b3a");
+      w.hline(0, 7, 16, "#3a2d30").hline(0, 15, 16, "#3a2d30");
+      w.vline(5, 0, 7, "#3a2d30").vline(12, 8, 7, "#3a2d30");
+      w.hline(1, 1, 3, "#5a4945").hline(7, 9, 4, "#5a4945");
+      addPx(this, "tavern:outer", w);
+    }
+    const RW = TAVERN_W * TS;
+    const RH = TAVERN_H * TS;
+    const M = 800; // far enough past any screen edge
+    this.add
+      .tileSprite(-M, -M, RW + M * 2, RH + M * 2, "tavern:outer")
+      .setOrigin(0, 0)
+      .setDepth(-12);
+    const shade = this.add.graphics().setDepth(-11);
+    for (let k = 1; k <= 10; k++) {
+      // rings of shadow, darker the further from the room
+      const d = k * 10;
+      shade.fillStyle(0x2b1b33, 0.07);
+      shade.fillRect(-M, -M, RW + M * 2, M - d); // top
+      shade.fillRect(-M, RH + d, RW + M * 2, M - d); // bottom
+      shade.fillRect(-M, -d, M - d, RH + d * 2); // left
+      shade.fillRect(RW + d, -d, M - d, RH + d * 2); // right
+    }
+    // the room's wall edge: ink, then a lit timber lip
+    shade.lineStyle(4, 0x2b1b33, 1).strokeRect(-2, -2, RW + 4, RH + 4);
+    shade.lineStyle(2, 0x8a5a3c, 1).strokeRect(-5, -5, RW + 10, RH + 10);
     this.add
       .image(0, 0, addPx(this, "tavern:bg", tavernInterior()))
       .setOrigin(0, 0)
@@ -1266,8 +1575,13 @@ export class TavernScene extends Phaser.Scene {
     this.player = new Walker(this, this.opts.viewerLook ?? lookFromSeed("you"), { x: EXIT.x, y: EXIT.y - 1 });
     this.player.dir = "up";
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, TAVERN_W * TS, TAVERN_H * TS);
-    cam.setZoom(this.opts.zoom);
+    const fitView = () => fitCamera(this, TAVERN_W * TS, TAVERN_H * TS, this.opts.zoom, 0.12);
+    fitView();
+    this.scale.on(Phaser.Scale.Events.RESIZE, fitView);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+      this.scale.off(Phaser.Scale.Events.RESIZE, fitView),
+    );
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.scale.off(Phaser.Scale.Events.RESIZE, fitView));
     cam.setRoundPixels(true);
     cam.startFollow(this.player.sprite, true, this.opts.reduced ? 1 : 0.18, this.opts.reduced ? 1 : 0.18);
 
@@ -1295,10 +1609,10 @@ export class TavernScene extends Phaser.Scene {
 
   unsub: () => void = () => {};
 
-  plate(x: number, y: number, text: string, pixel = true) {
+  plate(x: number, y: number, text: string, _pixel = true) {
     return this.add
       .text(x, y, text, {
-        fontFamily: pixel ? this.pixelFont : this.bodyFont,
+        fontFamily: this.pixelFont, // every nameplate and sign in the pixel face; only speech is Inter
         fontSize: "7px",
         color: "#2b1b33",
         backgroundColor: "#fbf6ecdd",
