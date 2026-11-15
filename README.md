@@ -4,7 +4,7 @@ Teach someone for an hour and you earn an hour. Spend it learning anything from 
 
 ![The Gate, where every visitor arrives](docs/screenshots/gate.png)
 
-**Try it:** [skillswap-jiga22.vercel.app](https://skillswap-jiga22.vercel.app). There's no sign-up. Your browser becomes your account, and you start with 2 hours to spend.
+**Try it:** [skillswap-seven-theta.vercel.app](https://skillswap-seven-theta.vercel.app). There's no sign-up. Your browser becomes your account, and you start with 2 hours to spend.
 
 ## The idea
 
