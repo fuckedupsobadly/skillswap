@@ -1,15 +1,26 @@
+# dependencies and builds
 node_modules
 .next
 out
-.env*.local
-.env
-.pglite*
-/test-results
-/playwright-report
 *.tsbuildinfo
 next-env.d.ts
+
+# secrets and local databases
+.env
+.env*.local
+.pglite*
 .vercel
-.DS_Store
+
+# test output
+test-results
+playwright-report
 .playwright-mcp
-# local screenshots
+
+# design notes kept locally, not published
+/Gamification.md
+/skillswap-village-ui.md
+/SkillSwap — System Architecture.md
+
+# OS and local screenshots
+.DS_Store
 Screenshot *.png

@@ -13,14 +13,14 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "drizzle-kit generate --config db/drizzle.config.ts",
     "db:migrate": "tsx db/migrate.ts",
     "db:deploy": "tsx db/deploy.ts",
     "db:seed": "tsx db/seed.ts",
     "db:reset": "tsx db/reset.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test": "vitest run --config tests/vitest.config.ts",
+    "test:watch": "vitest --config tests/vitest.config.ts",
+    "test:e2e": "playwright test --config tests/playwright.config.ts"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.177",

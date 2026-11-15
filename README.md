@@ -52,11 +52,7 @@ Every member adopts a one-of-a-kind pixel kitty. It sleeps on your hut's step, f
 
 ## Under the hood
 
-SkillSwap is a Next.js app with Postgres. The village is drawn with Phaser, and every sprite (tiles, buildings, villagers, kitties) is generated in code. The full designs are in the repo:
-
-- [System architecture](./SkillSwap%20—%20System%20Architecture.md): the time bank, ledger, escrow, matching and trust model
-- [Village UI](./skillswap-village-ui.md): the village, its places, the HUD and accessibility
-- [Gamification](./Gamification.md): the kitty, XP and ranks
+SkillSwap is a Next.js app with Postgres. The village is drawn with Phaser, and every sprite (tiles, buildings, villagers, kitties) is generated in code.
 
 ### Run it locally
 
@@ -92,3 +88,4 @@ One limit of running on serverless functions: live presence (who's walking where
 | The Barkeep (AI) | `modules/ai` |
 | Kitty and XP | `modules/game`, `ui/kitty` |
 | Database schema, migrations and seed | `db` |
+| Tests and their configs | `tests` |
