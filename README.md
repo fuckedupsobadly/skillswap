@@ -76,7 +76,7 @@ npm run db:reset     # wipe and reseed the local database (stop the dev server f
 
 ### Deploy
 
-The app deploys to Vercel with a Neon Postgres database. Connect Neon to the project from Vercel's Storage tab so `DATABASE_URL` is set, and add `APP_SECRET`. Each build runs `npm run db:deploy` first, which updates the database tables and seeds the village once (it's safe to run on every build), then builds the app. The optional services in [`.env.example`](./.env.example) each have a built-in fallback, so the app runs without them.
+The app deploys to Vercel with a Neon Postgres database. Connect Neon to the project from Vercel's Storage tab so `DATABASE_URL` is set, and add `APP_SECRET`. Each build runs `npm run db:deploy` first, which updates the database tables and seeds the village once (it's safe to run on every build), then builds the app. `vercel.ts` runs the functions in Frankfurt (`fra1`) because that's where this database lives; if you create yours in another region, change it to match, or every query pays for the distance. The optional services in [`.env.example`](./.env.example) each have a built-in fallback, so the app runs without them.
 
 One limit of running on serverless functions: live presence (who's walking where) is shared within one server instance rather than across all of them. The design calls for a realtime service such as Ably for that.
 
