@@ -66,8 +66,12 @@ export async function openPglite(dataDir: string): Promise<Opened> {
   return { db: db as unknown as DB, driver: "pglite", close: () => client.close() };
 }
 
-/** The gamification catalogue is data in code; upsert it, give sample members kitties, backfill XP. */
-async function ensureGame(db: DB) {
+/**
+ * The gamification catalogue is data in code; upsert it, give sample members kitties, backfill XP. Idempotent.
+ * `db:deploy` runs it once per build so that, in production, cold-starting instances find nothing to backfill
+ * and can't race each other adopting the same sample kitty.
+ */
+export async function ensureGame(db: DB) {
   const game = await import("@/modules/game/service");
   await game.ensureGameCatalog(db);
   await game.ensureSampleKitties(db);
